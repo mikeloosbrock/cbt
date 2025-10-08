@@ -3,7 +3,6 @@ import itertools
 
 import settings
 from benchmark.radosbench import Radosbench
-from benchmark.radosbench2 import Radosbench2
 from benchmark.fio import Fio
 from benchmark.hsbench import Hsbench
 from benchmark.rbdfio import RbdFio
@@ -14,6 +13,11 @@ from benchmark.nullbench import Nullbench
 from benchmark.cosbench import Cosbench
 from benchmark.cephtestrados import CephTestRados
 from benchmark.getput import Getput
+from benchmark.mbench-radosbench   import MBenchRadosbench
+from benchmark.mbench-fio-librados import MBenchFioLibrados
+from benchmark.mbench-fio-librbd   import MBenchFioLibrbd
+from benchmark.mbench-fio-krbd     import MBenchFioKrbd
+from benchmark.mbench-fio-device   import MBenchFioDevice
 
 def get_all(archive, cluster, iteration):
     for benchmark, config in sorted(settings.benchmarks.items()):
@@ -54,7 +58,6 @@ def get_object(archive, cluster, benchmark, bconfig):
     benchmarks = {
         'nullbench': Nullbench,
         'radosbench': Radosbench,
-        'radosbench2': Radosbench2,
         'fio': Fio,
         'hsbench': Hsbench,
         'rbdfio': RbdFio,
@@ -63,7 +66,13 @@ def get_object(archive, cluster, benchmark, bconfig):
         'librbdfio': LibrbdFio,
         'cosbench': Cosbench,
         'cephtestrados': CephTestRados,
-        'getput': Getput}
+        'getput': Getput,
+        'mbench-radosbench':   MBenchRadosbench,
+        'mbench-fio-librados': MBenchFioLibrados,
+        'mbench-fio-librbd':   MBenchFioLibrbd,
+        'mbench-fio-krbd':     MBenchFioKrbd,
+        'mbench-fio-device':   MBenchFioDevice,
+        }
     try:
         return benchmarks[benchmark](archive, cluster, bconfig)
     except KeyError:
