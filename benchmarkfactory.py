@@ -13,11 +13,11 @@ from benchmark.nullbench import Nullbench
 from benchmark.cosbench import Cosbench
 from benchmark.cephtestrados import CephTestRados
 from benchmark.getput import Getput
-from benchmark.mbench-radosbench   import MBenchRadosbench
-from benchmark.mbench-fio-librados import MBenchFioLibrados
-from benchmark.mbench-fio-librbd   import MBenchFioLibrbd
-from benchmark.mbench-fio-krbd     import MBenchFioKrbd
-from benchmark.mbench-fio-device   import MBenchFioDevice
+from benchmark.mbench_radosbench   import MBenchRadosbench
+from benchmark.mbench_fio_librados import MBenchFioLibrados
+from benchmark.mbench_fio_librbd   import MBenchFioLibrbd
+from benchmark.mbench_fio_krbd     import MBenchFioKrbd
+from benchmark.mbench_fio_device   import MBenchFioDevice
 
 def get_all(archive, cluster, iteration):
     for benchmark, config in sorted(settings.benchmarks.items()):
@@ -67,11 +67,11 @@ def get_object(archive, cluster, benchmark, bconfig):
         'cosbench': Cosbench,
         'cephtestrados': CephTestRados,
         'getput': Getput,
-        'mbench-radosbench':   MBenchRadosbench,
-        'mbench-fio-librados': MBenchFioLibrados,
-        'mbench-fio-librbd':   MBenchFioLibrbd,
-        'mbench-fio-krbd':     MBenchFioKrbd,
-        'mbench-fio-device':   MBenchFioDevice,
+        'mbench_radosbench':   MBenchRadosbench,
+        'mbench_fio_librados': MBenchFioLibrados,
+        'mbench_fio_librbd':   MBenchFioLibrbd,
+        'mbench_fio_krbd':     MBenchFioKrbd,
+        'mbench_fio_device':   MBenchFioDevice,
         }
     try:
         return benchmarks[benchmark](archive, cluster, bconfig)

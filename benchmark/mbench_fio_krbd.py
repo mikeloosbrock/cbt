@@ -12,7 +12,7 @@ class MBenchFioKrbd( MBench ):
     """
     Extends the base MBench initializer.
     """
-    self.driver = 'fio-krbd'
+    self.driver = 'fio_krbd'
     super().__init__( archive_dir, cluster, config )
 
   #----------------------------------------------------------------------------#

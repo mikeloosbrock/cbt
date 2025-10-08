@@ -12,7 +12,7 @@ class MBenchFioDevice( MBench ):
     """
     Extends the base MBench initializer.
     """
-    self.driver = 'fio-device'
+    self.driver = 'fio_device'
     super().__init__( archive_dir, cluster, config )
 
   #----------------------------------------------------------------------------#

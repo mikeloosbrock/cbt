@@ -332,7 +332,7 @@ class MBench( Benchmark ):
       if [ v for k, v in job.items() if type(v) != str ].count > 0:
         fail( "cfg.fio.jobs.%s must be a hash/dict of fio command line option name/value string pairs." % ( name ))
 
-    if self.driver == 'fio-krbd' or self.driver == 'fio-device'
+    if self.driver == 'fio_krbd' or self.driver == 'fio_device'
       if 'ioengine' not in self.cfg['fio']['defaults']:
         self.cfg['fio']['defaults'] = 'libaio'
 
@@ -449,14 +449,16 @@ class MBench( Benchmark ):
       self.dimensions.push( section, name )
 
       with monitoring( f'{section}-head-commands', self.cfg[section]['monitor'] ):
-        for command in commands['head']:
-          execute_on_clients( command )
+        # for command in commands['head']:
+        #   execute_on_clients( command )
+        pass
 
       yield
 
       with monitoring( f'{section}-tail-commands', self.cfg[section]['monitor'] ):
-        for command in commands['tail']:
-          execute_on_clients( command )
+        # for command in commands['tail']:
+        #   execute_on_clients( command )
+        pass
 
       self.dimensions.pop()
 
@@ -488,9 +490,9 @@ class MBench( Benchmark ):
   @contextmanager
   def image_variations( self ):
     """
-    Creates RBD image variations using one or more named image create option strings.
+    Creates client RBD image variations using one or more named image creation option strings.
     This method is only used by MBench drivers that use RBD images.
-    Note that image creation/removal commands are executed from clients, not the head.
+    Note that RBD image creation/removal commands are executed from clients, not the head host.
     """
     image_counts = self.cfg['image']['per-client-counts']
 
@@ -500,11 +502,12 @@ class MBench( Benchmark ):
 
       # Create all images (the max count) up front, instead of recreating them for each image count variation.
       with monitoring( 'create-images', self.cfg['image']['monitor'] ):
-        execute_on_clients( f'''
-          for i in {{1..{max(image_counts)}}}; do
-            sudo {rbd()} create {pool_image()}$i {options}
-          done
-        ''')
+        # execute_on_clients( f'''
+        #   for i in {{1..{max(image_counts)}}}; do
+        #     sudo {rbd()} create {pool_image()}$i {options}
+        #   done
+        # ''')
+        pass
 
       for image_count in image_counts:
 
@@ -516,11 +519,12 @@ class MBench( Benchmark ):
 
       # Delete all images at the end.
       with monitoring( 'remove-images', self.cfg['image']['monitor'] ):
-        execute_on_clients( f'''
-          for i in {{1..{max(image_counts)}}}; do
-            sudo {rbd()} rm {pool_image()}$i
-          done
-        ''')
+        # execute_on_clients( f'''
+        #   for i in {{1..{max(image_counts)}}}; do
+        #     sudo {rbd()} rm {pool_image()}$i
+        #   done
+        # ''')
+        pass
 
       self.dimensions.pop() # image
 
@@ -529,7 +533,7 @@ class MBench( Benchmark ):
   @contextmanager
   def map_variations( self ):
     """
-    Creates RBD image map variations using one or more named map option strings.
+    Creates client RBD image mapping variations using one or more named map option strings.
     This method is only used by MBench drivers that map RBD images.
     """
     for name, options in self.cfg['map']['options'].items():
@@ -537,20 +541,22 @@ class MBench( Benchmark ):
       self.dimensions.push( 'map', name )
 
       with monitoring( 'map-images', self.cfg['map']['monitor'] ):
-        execute_on_clients( f'''
-          for i in {{1..{image_count()}}}; do
-            sudo {rbd()} device map {pool_image()}$i --options '{options}'
-          done
-        ''')
+        # execute_on_clients( f'''
+        #   for i in {{1..{image_count()}}}; do
+        #     sudo {rbd()} device map {pool_image()}$i --options '{options}'
+        #   done
+        # ''')
+        pass
 
       yield
 
       with monitoring( 'unmap-images', self.cfg['map']['monitor'] ):
-        execute_on_clients( f'''
-          for i in {{1..{image_count()}}}; do
-            sudo {rbd()} device unmap {pool_image()}$i
-          done
-        ''')
+        # execute_on_clients( f'''
+        #   for i in {{1..{image_count()}}}; do
+        #     sudo {rbd()} device unmap {pool_image()}$i
+        #   done
+        # ''')
+        pass
 
       self.dimensions.pop()
 
@@ -559,8 +565,8 @@ class MBench( Benchmark ):
   @contextmanager
   def filesystem_variations( self ):
     """
-    Creates RBD image filesystem variations using one or more named mkfs option strings.
-    If the named mkfs option string is null/None, no filesystem is created on the RBD image.
+    Creates client RBD image filesystem variations using one or more named mkfs option strings.
+    If the named mkfs option string is null/None, no RBD image filesystem is created.
     This method is only used by MBench drivers that map and mount RBD images.
     """
     for name, options in self.cfg['mkfs']['options'].items():
@@ -569,11 +575,12 @@ class MBench( Benchmark ):
 
       if options:
         with monitoring( 'make-filesystems', self.cfg['mkfs']['monitor'] ):
-          execute_on_clients( f'''
-            for i in {{1..{image_count()}}}; do
-              sudo mkfs {options} /dev/rbd/{pool_image()}$i
-            done
-          ''')
+          # execute_on_clients( f'''
+          #   for i in {{1..{image_count()}}}; do
+          #     sudo mkfs {options} /dev/rbd/{pool_image()}$i
+          #   done
+          # ''')
+          pass
 
       yield
 
@@ -603,20 +610,22 @@ class MBench( Benchmark ):
         self.dimensions.push( 'mount', name )
 
         with monitoring( 'mount-filesystems', self.cfg['mount']['monitor'] ):
-          execute_on_clients( f'''
-            for i in {{1..{image_count()}}}; do
-              sudo mount {options} /dev/rbd/{pool_image()}$i {mount_point()}$i;
-            done
-          ''')
+          # execute_on_clients( f'''
+          #   for i in {{1..{image_count()}}}; do
+          #     sudo mount {options} /dev/rbd/{pool_image()}$i {mount_point()}$i;
+          #   done
+          # ''')
+          pass
 
         yield
 
         with monitoring( 'unmount-filesystems', self.cfg['mount']['monitor'] ):
-          execute_on_clients( f'''
-            for i in {{1..{image_count()}}}; do
-              sudo umount {mount_point()}$i;
-            done
-          ''')
+          # execute_on_clients( f'''
+          #   for i in {{1..{image_count()}}}; do
+          #     sudo umount {mount_point()}$i;
+          #   done
+          # ''')
+          pass
 
         self.dimensions.pop()
 
@@ -683,25 +692,23 @@ class MBench( Benchmark ):
       radosbench = f'{self.cmd_path_full}'
       options    = radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
-      dropcaches()
+      # dropcaches()
 
       with monitoring( None, self.cfg['radosbench']['monitor'] ):
 
         process_count = self.dimensions['procs']['value']
         processes = []
 
-        for p in range( process_count ):
+        # for p in range( process_count ):
+        #   processes.append(
+        #     execute_on_clients( f'''
+        #       mkdir -p {job_dir}/process-{p}
+        #       cd {job_dir}/process-{p}
+        #       {radosbench} {options}-{p} 2> stderr > stdout
+        #     '''))
 
-        # processes.append(
-        #   execute_on_clients( f'''
-          logger.info(( f'''
-              mkdir -p {job_dir}/process-{p}
-              cd {job_dir}/process-{p}
-              {radosbench} {options}-{p} 2> stderr > stdout
-            '''))
-
-        for process in processes:
-          process.wait()
+        # for process in processes:
+        #   process.wait()
 
       self.dimensions.pop()
 
@@ -754,25 +761,23 @@ class MBench( Benchmark ):
       fio     = f'{self.cmd_path_full}'
       options = fio_job_options()
 
-      dropcaches()
+      # dropcaches()
 
       with monitoring( None, self.cfg['fio']['monitor'] ):
 
         process_count = self.dimensions['procs']['value']
         processes = []
 
-        for p in range( process_count ):
+        # for p in range( process_count ):
+        #   processes.append(
+        #     execute_on_clients( f'''
+        #       mkdir -p {job_dir}/process-{p}
+        #       cd {job_dir}/process-{p}
+        #       {fio} {options} 2> stderr > stdout
+        #     '''))
 
-        # processes.append(
-        #   execute_on_clients( f'''
-          logger.info(( f'''
-              mkdir -p {job_dir}/process-{p}
-              cd {job_dir}/process-{p}
-              {fio} {options} 2> stderr > stdout
-            '''))
-            
-        for process in processes:
-          process.wait()
+        # for process in processes:
+        #   process.wait()
 
       self.dimensions.pop()
 
@@ -783,13 +788,13 @@ class MBench( Benchmark ):
     TODO
     """
     hosts = settings.getnodes( 'osds', 'clients' )
-    commands = f'''
-      sudo mkdir -p -m 0755 {self.run_dir}
-      cd {self.run_dir}
-      sudo 
-      echo '' | sudo tee ceph.conf
-    ''')
-    common.pdsh( hosts, commands, continue_if_error=False )
+    # commands = f'''
+    #   sudo mkdir -p -m 0755 {self.run_dir}
+    #   cd {self.run_dir}
+    #   sudo 
+    #   echo '' | sudo tee ceph.conf
+    # '''
+    # common.pdsh( hosts, commands, continue_if_error=False )
 
   #----------------------------------------------------------------------------#
 
