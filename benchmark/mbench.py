@@ -56,7 +56,7 @@ class MBenchDimensions:
     """
     Removes the last dimension on the stack.
     """
-    if self.stack.count() == 0:
+    if len( self.stack ) == 0:
       return None
     dimension = self.stack.pop()
     self.dimensions.pop( dimension['name'] )
@@ -76,7 +76,7 @@ class MBenchDimensions:
     """
     Returns the dimension specified by either an integer stack index or a string dimension name.
     """
-    if type( dimension ) == int and dimension >= 0 and dimension < self.stack.count():
+    if type( dimension ) == int and dimension >= 0 and dimension < len( self.stack ):
       return self.stack[dimension]
 
     elif dimension in self.dimensions:
