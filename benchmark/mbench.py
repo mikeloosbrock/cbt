@@ -5,6 +5,7 @@ import os
 import time
 import logging
 import copy
+import yaml
 from contextlib import contextmanager
 
 from .benchmark import Benchmark
