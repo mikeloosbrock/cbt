@@ -262,7 +262,7 @@ class MBench( Benchmark ):
         self.cfg
 
     for key in user_cfg:
-      if key in default_cfg:
+      if key in defaults:
         self.cfg[key].update( user_cfg[key] )
 
     client = self.cfg['client']
