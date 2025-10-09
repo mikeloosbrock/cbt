@@ -194,8 +194,8 @@ class MBench( Benchmark ):
 
       image:                       # controls how per-client RBD images are created - only used by MBench drivers that use RBD
         monitor: true              # enable/disable performance monitoring of RBD image creation/removal
-        name-prefix: ''            # this string is always appended with "`hostname -s`-" to ensure pool-global unique RBD image names
-        per-client-counts: [ 1 ]   # must contain one or more integer values, each being a number of RBD images to create per client
+        name-prefix: ''            # this string is always appended with "`hostname -f`-" to ensure pool-global unique RBD image names
+        per-client-counts: [ 1 ]   # array of integers, each being a number of RBD images to use per client
         options:                   # named option strings, each being passed as-is to the 'rbd create' cli command
           default: --size 1TB
 
@@ -244,6 +244,7 @@ class MBench( Benchmark ):
 
       radosbench:                  # controls how radosbench jobs are run on clients
         monitor: true              # enable/disable performance monitoring of radosbench jobs
+        process_counts: [ 1 ]      # array of integers, each being a number of parallel processes to use for each job
         defaults:                  # radosbench cmd line options used for every job unless a job-specific override is specified
           duration: 30             # pseudo-option that maps to the radosbench positional argument that controls the test duration
           o: 4096                  #
@@ -255,6 +256,7 @@ class MBench( Benchmark ):
 
       fio:                         # controls how fio jobs are run on clients
         monitor: true              # enable/disable performance monitoring of fio jobs
+        process_counts: [ 1 ]      # array of integers, each being a number of parallel processes to use for each job
         defaults:                  # fio cmd line options used for every job unless a job-specific override is specified
           ioengine:  libaio        # this is forcefully overridden for certain MBench drivers
           rwmixread: 50            #
