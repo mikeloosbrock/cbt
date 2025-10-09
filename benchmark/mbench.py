@@ -784,7 +784,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def setup_hosts( self )
+  def setup_hosts( self ):
     """
     TODO
     """
