@@ -41,11 +41,12 @@ class MBenchDimensions:
     """
     Adds a new dimension on the stack.
     """
-    self.stack += self.dimensions[name] = {
+    self.stack += {
       'name'  : name,
       'value' : value,
       'state' : {}.update( state ), # purposely *not* a deep copy
     }
+    self.dimensions[name] = self.stack[-1]
 
   #----------------------------------------------------------------------------#
 
@@ -93,10 +94,10 @@ class MBenchDimensions:
       stack = []
       for d in self.stack:
         stack.append( d )
-        if d['name'] == dimension
+        if d['name'] == dimension:
           break
 
-    return s1.join( [ f'{d['name']}{s2}{d['value']}' for d in stack ] )
+    return s1.join( [ f"{d['name']}{s2}{d['value']}" for d in stack ] )
 
 #==============================================================================#
 #==============================================================================#
@@ -113,7 +114,7 @@ class MBench( Benchmark ):
     Extends the base Benchmark initializer.
     """
     super().__init__( archive_dir, cluster, config )
-    load_cfg()
+    self.load_cfg()
     self.dimensions = MBenchDimensions()
 
   #----------------------------------------------------------------------------#
@@ -251,8 +252,8 @@ class MBench( Benchmark ):
     """
     .
     """
-    defaults = default_cfg() # used to re-populate any mandatory nested keys that are pruned after merging the user cfg
-    self.cfg = default_cfg() # start with a copy of the default cfg ...
+    defaults = self.default_cfg() # used to re-populate any mandatory nested keys that are pruned after merging the user cfg
+    self.cfg = self.default_cfg() # start with a copy of the default cfg ...
     self.cfg.update( cfg )   # ... then override/extend it by (shallow) merging the user cfg
 
     for key in self.cfg.keys():
@@ -261,14 +262,12 @@ class MBench( Benchmark ):
 
     for key in user_cfg:
       if key in default_cfg:
-
         self.cfg[key].update( user_cfg[key] )
-
 
     client = self.cfg['client']
     if type( client ) != dict:
       fail( "cfg.client must be a hash/dict." )
-    client['groups'] =
+    client['groups'] = \
       client.get( 'groups', defaults['client']['groups'] ) # in case user cfg is missing 'groups' key
     if type( client['groups'] ) != dict:
       fail( "cfg.client.groups must be a hash/dict of named client groups." )
@@ -276,7 +275,7 @@ class MBench( Benchmark ):
     pool = self.cfg['pool']
     if type( pool ) != dict:
       fail( "cfg.pool must be a hash/dict." )
-    pool['profiles'] =
+    pool['profiles'] = \
       pool.get( 'profiles', defaults['pool']['profiles'] ) # in case user cfg is missing 'profiles' key
     if type( pool['options'] ) != dict:
       fail( "cfg.pool.profiles must be a hash/dict of named pool profiles." )
@@ -289,7 +288,7 @@ class MBench( Benchmark ):
       cmd = { 'image':"'rbd create'", 'map':"'rbd device map'" }.get( s, s )
       if type( section ) != dict:
         fail( "cfg.%s must be a hash/dict." % ( s ))
-      section['options'] =
+      section['options'] = \
         section.get( 'options', defaults[s]['options'] ) # in case user cfg is missing 'options' key
       if type( section['options'] ) != dict:
         fail( "cfg.%s.options must be a hash/dict of named %s command options strings." % ( s, cmd ))
@@ -301,7 +300,7 @@ class MBench( Benchmark ):
       section = self.cfg[s]
       if type( section ) != dict:
         fail( "cfg.%s must be a hash/dict." % ( s ))
-      section['commands'] =
+      section['commands'] = \
         section.get( 'commands', defaults[s]['commands'] ) # in case user cfg is missing 'commands' key
       if type( section['commands'] ) != dict:
         fail( "cfg.%s.commands must be a hash/dict of named client shell command sets." % ( s ))
@@ -316,13 +315,13 @@ class MBench( Benchmark ):
     fio = self.cfg['fio']
     if type( fio ) != dict:
       fail( "cfg.fio must be a hash/dict." )
-    fio['defaults'] =
+    fio['defaults'] = \
       fio.get( 'defaults', defaults['fio']['defaults'] ) # in case user cfg is missing 'defaults' key
     if type( fio['defaults'] ) != dict:
       fail( "cfg.fio.defaults must be a hash/dict of fio command line option name/value string pairs." )
     if [ v for k, v in fio['defaults'].items() if type(v) != str ].count > 0:
       fail( "cfg.fio.defaults must be a hash/dict of fio command line option name/value string pairs." )
-    fio['jobs'] =
+    fio['jobs'] = \
       fio.get( 'jobs', defaults['fio']['jobs'] ) # in case user cfg is missing 'jobs' key
     if type( fio['jobs'] ) != dict:
       fail( "cfg.fio.jobs must be a hash/dict of named fio jobs." )
@@ -332,7 +331,7 @@ class MBench( Benchmark ):
       if [ v for k, v in job.items() if type(v) != str ].count > 0:
         fail( "cfg.fio.jobs.%s must be a hash/dict of fio command line option name/value string pairs." % ( name ))
 
-    if self.driver == 'fio_krbd' or self.driver == 'fio_device'
+    if self.driver == 'fio_krbd' or self.driver == 'fio_device':
       if 'ioengine' not in self.cfg['fio']['defaults']:
         self.cfg['fio']['defaults'] = 'libaio'
 
@@ -352,7 +351,7 @@ class MBench( Benchmark ):
   def image_count( self ):
     """
     Returns the number of images to use per client.
-    The return value changes as different cfg.image.per-client-counts are traversed in create_images().
+    The return value changes as different cfg.image.per-client-counts are traversed in self.image_variations().
     """
     return self.dimensions['image-count']['value']
 
@@ -361,7 +360,7 @@ class MBench( Benchmark ):
   def pool_image( self ):
     """
     Returns (most of) the pool and RBD image names in <pool>/<image> format.
-    The caller must append the RBD image index number to the returned string. See image_count().
+    The caller must append the RBD image index number to the returned string. See self.image_count().
     Also note that the image name portion contains shell expansion syntax to get client FQDNs.
     Therfore the returned string should only be used in shell commands executed on clients.
     """
@@ -372,7 +371,7 @@ class MBench( Benchmark ):
   def mount_point( self ):
     """
     Returns (most of) the absolute path to the directory that an RBD image filesystem is mounted at.
-    The caller must append the RBD image index number to the returned string. See image_count().
+    The caller must append the RBD image index number to the returned string. See self.image_count().
     """
     return f"{self.run_dir}/{self.cfg['mount']['subdir']}-"
 
@@ -381,7 +380,7 @@ class MBench( Benchmark ):
   def execute_on_clients( self, command ):
     """
     Executes a shell command on the current client group.
-    The client hosts used changes as different cfg.client.groups are traversed in client_variations().
+    The client hosts used changes as different cfg.client.groups are traversed in self.client_variations().
     """
     group = self.dimensions['client']['value']
     hosts = self.cfg['client']['groups'][group]['hosts']
@@ -431,7 +430,7 @@ class MBench( Benchmark ):
     """
     for name, configuration in self.cfg['client']['configurations'].items():
 
-      self.dimensions.push( 'client', name ) # used by execute_on_clients()
+      self.dimensions.push( 'client', name ) # used by self.execute_on_clients()
 
       yield
 
@@ -448,16 +447,16 @@ class MBench( Benchmark ):
 
       self.dimensions.push( section, name )
 
-      with monitoring( f'{section}-head-commands', self.cfg[section]['monitor'] ):
+      with self.monitoring( f'{section}-head-commands', self.cfg[section]['monitor'] ):
         # for command in commands['head']:
-        #   execute_on_clients( command )
+        #   self.execute_on_clients( command )
         pass
 
       yield
 
-      with monitoring( f'{section}-tail-commands', self.cfg[section]['monitor'] ):
+      with self.monitoring( f'{section}-tail-commands', self.cfg[section]['monitor'] ):
         # for command in commands['tail']:
-        #   execute_on_clients( command )
+        #   self.execute_on_clients( command )
         pass
 
       self.dimensions.pop()
@@ -475,13 +474,15 @@ class MBench( Benchmark ):
 
       self.dimensions.push( 'pool', name )
 
-      with monitoring( 'create-pool', self.cfg['pool']['monitor'] ):
-        self.cluster.mkpool( )
+      with self.monitoring( 'create-pool', self.cfg['pool']['monitor'] ):
+        # self.cluster.mkpool( ? )
+        pass
 
       yield
 
-      with monitoring( 'remove-pool', self.cfg['pool']['monitor'] ):
-        self.cluster.rmpool( )
+      with self.monitoring( 'remove-pool', self.cfg['pool']['monitor'] ):
+        # self.cluster.rmpool( ? )
+        pass
 
       self.dimensions.pop()
 
@@ -501,27 +502,27 @@ class MBench( Benchmark ):
       self.dimensions.push( 'image', name )
 
       # Create all images (the max count) up front, instead of recreating them for each image count variation.
-      with monitoring( 'create-images', self.cfg['image']['monitor'] ):
-        # execute_on_clients( f'''
+      with self.monitoring( 'create-images', self.cfg['image']['monitor'] ):
+        # self.execute_on_clients( f'''
         #   for i in {{1..{max(image_counts)}}}; do
-        #     sudo {rbd()} create {pool_image()}$i {options}
+        #     sudo {self.rbd()} create {self.pool_image()}$i {options}
         #   done
         # ''')
         pass
 
       for image_count in image_counts:
 
-        self.dimensions.push( 'image-count', image_count ) # used by image_count()
+        self.dimensions.push( 'image-count', image_count ) # used by self.image_count()
 
         yield
 
         self.dimensions.pop() # image-count
 
       # Delete all images at the end.
-      with monitoring( 'remove-images', self.cfg['image']['monitor'] ):
-        # execute_on_clients( f'''
+      with self.monitoring( 'remove-images', self.cfg['image']['monitor'] ):
+        # self.execute_on_clients( f'''
         #   for i in {{1..{max(image_counts)}}}; do
-        #     sudo {rbd()} rm {pool_image()}$i
+        #     sudo {self.rbd()} rm {self.pool_image()}$i
         #   done
         # ''')
         pass
@@ -540,20 +541,20 @@ class MBench( Benchmark ):
 
       self.dimensions.push( 'map', name )
 
-      with monitoring( 'map-images', self.cfg['map']['monitor'] ):
-        # execute_on_clients( f'''
-        #   for i in {{1..{image_count()}}}; do
-        #     sudo {rbd()} device map {pool_image()}$i --options '{options}'
+      with self.monitoring( 'map-images', self.cfg['map']['monitor'] ):
+        # self.execute_on_clients( f'''
+        #   for i in {{1..{self.image_count()}}}; do
+        #     sudo {self.rbd()} device map {self.pool_image()}$i --options '{options}'
         #   done
         # ''')
         pass
 
       yield
 
-      with monitoring( 'unmap-images', self.cfg['map']['monitor'] ):
-        # execute_on_clients( f'''
-        #   for i in {{1..{image_count()}}}; do
-        #     sudo {rbd()} device unmap {pool_image()}$i
+      with self.monitoring( 'unmap-images', self.cfg['map']['monitor'] ):
+        # self.execute_on_clients( f'''
+        #   for i in {{1..{self.image_count()}}}; do
+        #     sudo {self.rbd()} device unmap {self.pool_image()}$i
         #   done
         # ''')
         pass
@@ -574,10 +575,10 @@ class MBench( Benchmark ):
       self.dimensions.push( 'mkfs', name, options )
 
       if options:
-        with monitoring( 'make-filesystems', self.cfg['mkfs']['monitor'] ):
-          # execute_on_clients( f'''
-          #   for i in {{1..{image_count()}}}; do
-          #     sudo mkfs {options} /dev/rbd/{pool_image()}$i
+        with self.monitoring( 'make-filesystems', self.cfg['mkfs']['monitor'] ):
+          # self.execute_on_clients( f'''
+          #   for i in {{1..{self.image_count()}}}; do
+          #     sudo mkfs {options} /dev/rbd/{self.pool_image()}$i
           #   done
           # ''')
           pass
@@ -609,20 +610,20 @@ class MBench( Benchmark ):
 
         self.dimensions.push( 'mount', name )
 
-        with monitoring( 'mount-filesystems', self.cfg['mount']['monitor'] ):
-          # execute_on_clients( f'''
-          #   for i in {{1..{image_count()}}}; do
-          #     sudo mount {options} /dev/rbd/{pool_image()}$i {mount_point()}$i;
+        with self.monitoring( 'mount-filesystems', self.cfg['mount']['monitor'] ):
+          # self.execute_on_clients( f'''
+          #   for i in {{1..{self.image_count()}}}; do
+          #     sudo mount {options} /dev/rbd/{self.pool_image()}$i {self.mount_point()}$i;
           #   done
           # ''')
           pass
 
         yield
 
-        with monitoring( 'unmount-filesystems', self.cfg['mount']['monitor'] ):
-          # execute_on_clients( f'''
-          #   for i in {{1..{image_count()}}}; do
-          #     sudo umount {mount_point()}$i;
+        with self.monitoring( 'unmount-filesystems', self.cfg['mount']['monitor'] ):
+          # self.execute_on_clients( f'''
+          #   for i in {{1..{self.image_count()}}}; do
+          #     sudo umount {self.mount_point()}$i;
           #   done
           # ''')
           pass
@@ -692,16 +693,16 @@ class MBench( Benchmark ):
       radosbench = f'{self.cmd_path_full}'
       options    = radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
-      # dropcaches()
+      # self.dropcaches()
 
-      with monitoring( None, self.cfg['radosbench']['monitor'] ):
+      with self.monitoring( None, self.cfg['radosbench']['monitor'] ):
 
         process_count = self.dimensions['procs']['value']
         processes = []
 
         # for p in range( process_count ):
         #   processes.append(
-        #     execute_on_clients( f'''
+        #     self.execute_on_clients( f'''
         #       mkdir -p {job_dir}/process-{p}
         #       cd {job_dir}/process-{p}
         #       {radosbench} {options}-{p} 2> stderr > stdout
@@ -761,16 +762,16 @@ class MBench( Benchmark ):
       fio     = f'{self.cmd_path_full}'
       options = fio_job_options()
 
-      # dropcaches()
+      # self.dropcaches()
 
-      with monitoring( None, self.cfg['fio']['monitor'] ):
+      with self.monitoring( None, self.cfg['fio']['monitor'] ):
 
         process_count = self.dimensions['procs']['value']
         processes = []
 
         # for p in range( process_count ):
         #   processes.append(
-        #     execute_on_clients( f'''
+        #     self.execute_on_clients( f'''
         #       mkdir -p {job_dir}/process-{p}
         #       cd {job_dir}/process-{p}
         #       {fio} {options} 2> stderr > stdout
@@ -798,7 +799,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def run_variations( self )
+  def run_variations( self ):
     """
     TODO
     """
@@ -806,7 +807,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def gather_results( self )
+  def gather_results( self ):
     """
     TODO
     """
@@ -822,6 +823,6 @@ class MBench( Benchmark ):
 
     self.dimensions.reset()
 
-    setup_hosts()
-    run_variations()
-    gather_results()
+    self.setup_hosts()
+    self.run_variations()
+    self.gather_results()

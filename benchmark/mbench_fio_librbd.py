@@ -21,9 +21,9 @@ class MBenchFioLibrbd( MBench ):
     """
     Called by the base MBench.run() method.
     """
-    with osd_variations():
-      with client_variations():
-        with pool_variations():
-          with image_variations():
-            with command_variations( 'pre-jobs' ):
-              run_fio_jobs()
+    with self.osd_variations():
+      with self.client_variations():
+        with self.pool_variations():
+          with self.image_variations():
+            with self.command_variations( 'pre-jobs' ):
+              self.run_fio_jobs()

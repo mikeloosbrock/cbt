@@ -21,6 +21,6 @@ class MBenchFioDevice( MBench ):
     """
     Called by the base MBench.run() method.
     """
-    with device_variations():
-      with command_variations( 'pre-jobs' ):
-        run_fio_jobs()
+    with self.device_variations():
+      with self.command_variations( 'pre-jobs' ):
+        self.run_fio_jobs()

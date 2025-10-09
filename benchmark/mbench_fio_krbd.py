@@ -21,15 +21,15 @@ class MBenchFioKrbd( MBench ):
     """
     Called by the base MBench.run() method.
     """
-    with osd_variations():
-      with client_variations():
-        with pool_variations():
-          with image_variations():
-            with command_variations( 'pre-map' ):
-              with map_variations():
-                with command_variations( 'pre-mkfs' ):
-                  with filesystem_variations():
-                    with command_variations( 'pre-mount' ):
-                      with mount_variations():
-                        with command_variations( 'pre-jobs' ):
-                          run_fio_jobs()
+    with self.osd_variations():
+      with self.client_variations():
+        with self.pool_variations():
+          with self.image_variations():
+            with self.command_variations( 'pre-map' ):
+              with self.map_variations():
+                with self.command_variations( 'pre-mkfs' ):
+                  with self.filesystem_variations():
+                    with self.command_variations( 'pre-mount' ):
+                      with self.mount_variations():
+                        with self.command_variations( 'pre-jobs' ):
+                          self.run_fio_jobs()
