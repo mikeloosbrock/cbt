@@ -43,11 +43,11 @@ class MBenchDimensions:
     """
     Adds a new dimension on the stack.
     """
-    self.stack += {
+    self.stack.append({
       'name'  : name,
       'value' : value,
       'state' : {}.update( state ), # purposely *not* a deep copy
-    }
+    })
     self.dimensions[name] = self.stack[-1]
 
   #----------------------------------------------------------------------------#
