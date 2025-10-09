@@ -727,7 +727,7 @@ class MBench( Benchmark ):
 
       for process_count in process_counts:
 
-        self.dimensions.push( 'processes', process_count )
+        self.dimensions.push( 'procs', process_count )
 
         job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
         radosbench = f'{self.cmd_path_full}'
@@ -739,19 +739,19 @@ class MBench( Benchmark ):
 
           processes = []
           for p in range( process_count ):
+            command = f'{radosbench} {options}-{p} 2> stderr > stdout'
             processes.append(
               self.execute_on_clients( f'''
-                mkdir -p {job_dir}/process-{p}
-                cd {job_dir}/process-{p}
-                cat <<EOF | tee {job_dir}/command
-                {radosbench} {options}-{p} 2> stderr > stdout
-                EOF
+                mkdir -p {job_dir}/proc-{p}
+                cd {job_dir}/proc-{p}
+                cat | tee {job_dir}/command <<EOF\n{command}\nEOF
+                # {command}
               '''))
 
           for process in processes:
             process.wait()
 
-        self.dimensions.pop() # proc-cnt
+        self.dimensions.pop() # procs
 
       self.dimensions.pop() # job
 
@@ -775,11 +775,11 @@ class MBench( Benchmark ):
       'ioengine'        : forced_ioengine or options['ioengine'] or 'libaio',
       'group_reporting' : 1,
       'per_job_logs'    : 0,
-      'write_bw_log'    : 'process', # => process_bw.log
-      'write_iops_log'  : 'process', # => process_iops.log
-      'write_lat_log'   : 'process', # => process_lat.log
-      'write_hist_log'  : 'process', # => process_hist.log
-      'output'          : 'process',
+      'write_bw_log'    : 'proc', # => proc_bw.log
+      'write_iops_log'  : 'proc', # => proc_iops.log
+      'write_lat_log'   : 'proc', # => proc_lat.log
+      'write_hist_log'  : 'proc', # => proc_hist.log
+      'output'          : 'proc',
       'output-format'   : 'terse,json',
     }
 
@@ -809,11 +809,12 @@ class MBench( Benchmark ):
 
       for process_count in process_counts:
 
-        self.dimensions.push( 'processes', process_count )
+        self.dimensions.push( 'procs', process_count )
 
         job_dir = f'{self.run_dir}/{self.dimensions.path()}'
         fio     = f'{self.cmd_path_full}'
         options = self.build_fio_job_options()
+        command = f'{fio} {options} 2> stderr > stdout'
 
         # self.dropcaches()
 
@@ -823,15 +824,16 @@ class MBench( Benchmark ):
           for p in range( process_count ):
             processes.append(
               self.execute_on_clients( f'''
-                mkdir -p {job_dir}/process-{p}
-                cd {job_dir}/process-{p}
-                # {fio} {options} 2> stderr > stdout
+                mkdir -p {job_dir}/proc-{p}
+                cd {job_dir}/proc-{p}
+                cat | tee {job_dir}/command <<EOF\n{command}\nEOF
+                # {command}
               '''))
 
           for process in processes:
             process.wait()
 
-        self.dimensions.pop() # proc-cnt
+        self.dimensions.pop() # procs
       
       self.dimensions.pop() # job
 
