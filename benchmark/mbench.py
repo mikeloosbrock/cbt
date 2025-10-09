@@ -646,7 +646,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def radosbench_job_options( self ):
+  def get_radosbench_job_options( self ):
     """
     Returns a string containing the radosbench command line options for the current radosbench job.
     This method is only used by MBench drivers that leverage radosbench.
@@ -705,7 +705,7 @@ class MBench( Benchmark ):
 
       job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
       radosbench = f'{self.cmd_path_full}'
-      options    = radosbench_job_options() # --run-name must be the last option so a job process index can be appended
+      options    = get_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
       # self.dropcaches()
 
@@ -729,7 +729,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def fio_job_options( self ):
+  def get_fio_job_options( self ):
     """
     Returns a string containing the fio command line options for the current fio job.
     This method is only used by MBench drivers that leverage fio.
@@ -774,7 +774,7 @@ class MBench( Benchmark ):
 
       job_dir = f'{self.run_dir}/{self.dimensions.path()}'
       fio     = f'{self.cmd_path_full}'
-      options = fio_job_options()
+      options = self.get_fio_job_options()
 
       # self.dropcaches()
 
