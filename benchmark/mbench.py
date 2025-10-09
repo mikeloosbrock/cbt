@@ -410,7 +410,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def execute_on_clients( self, commands, continue_if_error=False ):
+  def execute_on_clients( self, commands, continue_if_error=False, waitable=True ):
     """
     Executes shell commands on the currently active client nodes.
     The active client nodes change as different cfg.client.configurations are traversed in self.client_variations().
@@ -419,7 +419,9 @@ class MBench( Benchmark ):
     nodes = self.cfg['clients']['configurations'][name]['nodes']
     nodes = settings.getnodes( 'clients' ) if nodes == '*' else ','.join( nodes )
 
-    return common.pdsh( nodes, commands, continue_if_error ).communicate()
+    process = common.pdsh( nodes, commands, continue_if_error )
+
+    return process if waitable else process.communicate()
 
   #----------------------------------------------------------------------------#
 
