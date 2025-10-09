@@ -415,8 +415,8 @@ class MBench( Benchmark ):
     Executes shell commands on the currently active client nodes.
     The active client nodes change as different cfg.client.configurations are traversed in self.client_variations().
     """
-    group = self.dimensions['clients']['value']
-    nodes = self.cfg['clients']['groups'][group]['nodes']
+    name  = self.dimensions['clients']['value']
+    nodes = self.cfg['clients']['configurations'][name]['nodes']
     nodes = settings.getnodes( 'clients' ) if nodes == '*' else ','.join( nodes )
 
     return common.pdsh( nodes, commands, continue_if_error ).communicate()
