@@ -686,7 +686,7 @@ class MBench( Benchmark ):
     operation = options.pop( 'operation' )
 
     forced_options = {
-      'id'         : self.cfg['client']['ceph-auth-id'],
+      'id'         : self.cfg['clients']['ceph-auth-id'],
       'conf'       : f'{self.run_dir}',
       'pool'       : self.cfg['pool']['name'],
       'no-cleanup' : None,
@@ -837,15 +837,17 @@ class MBench( Benchmark ):
     """
     TODO
     """
-    client   = f"client.{self.cfg['client']['ceph-auth-id']}"
-    key      = self.cfg['client']['ceph-auth-key']
+    client   = f"client.{self.cfg['clients']['ceph-auth-id']}"
     mon_caps = f"mon 'profile rbd'"
     osd_caps = f"osd 'allow * pool={self.cfg['pool']['name']}, allow * pool={self.cfg['pool']['name']}-data'"
     mgr_caps = f"mgr 'profile rbd pool={self.cfg['pool']['name']}, profile rbd pool={self.cfg['pool']['name']}-data'"
 
     self.execute_on_head( f'''
       sudo mkdir -p -m 0755 {self.run_dir}
-      sudo ceph auth get-or-create {client} {mon_caps} {osd_caps} {mgr_caps} > {self.run_dir}/ceph.keyring
+      sudo ceph auth rm {client}
+      sudo ceph auth create {client} {mon_caps} {osd_caps} {mgr_caps}
+      sudo ceph auth get {client} | sudo tee {self.run_dir}/ceph.keyring
+      sudo chmod 0755 -R {self.run_dir}
     ''')
 
   #----------------------------------------------------------------------------#
