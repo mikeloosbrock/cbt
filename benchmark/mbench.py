@@ -285,10 +285,10 @@ class MBench( Benchmark ):
     for key in 'monitor profiles'.split():
       pool[key] = pool.get( key, defaults[s][key] )
     if type( pool['profiles'] ) != list:
-      raise Exception( "Error: MBench cfg.pool.profiles must be an array/list of named pool profiles from the cluster.pool_profiles cfg." )
+      raise Exception( "Error: MBench cfg.pool.profiles must be an array/list of named pool profiles from the cluster pool_profiles cfg." )
     for profile in pool['profiles']:
       if type( profile ) != str:
-        raise Exception( f"Error: MBench cfg.pool.profiles.{profile} must be a string profile name from the cluster.pool_profiles cfg." )
+        raise Exception( f"Error: MBench cfg.pool.profiles.{profile} must be a string profile name from the cluster pool_profiles cfg." )
 
     for s in 'image map mkfs mount'.split():
       section = self.cfg[s]
@@ -337,17 +337,13 @@ class MBench( Benchmark ):
         if [ v for k, v in job.items() if type(v) != str ].count > 0:
           raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
 
-    if self.driver == 'fio_krbd' or self.driver == 'fio_device':
-      if 'ioengine' not in self.cfg['fio']['defaults']:
-        self.cfg['fio']['defaults'] = 'libaio'
-
   #----------------------------------------------------------------------------#
 
   def rbd( self ):
     """
     Returns .
     """
-    rbd  = self.cfg['client']['rbd-path'] or self.cluster.
+    rbd  = 'rbd' #self.cfg['client']['rbd-path'] or self.cluster.
     user = self.cfg['client']['id']
     conf = f'{self.run_dir}/ceph.conf'
     return f'{rbd} --id {user} --conf {conf}'
