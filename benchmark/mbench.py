@@ -725,27 +725,29 @@ class MBench( Benchmark ):
 
       for process_count in process_counts:
 
-        self.dimensions.push( 'proc-cnt', process_count )
+        self.dimensions.push( 'processes', process_count )
 
         job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
         radosbench = f'{self.cmd_path_full}'
         options    = self.build_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
-        # self.dropcaches()
+        self.dropcaches()
 
         with self.monitoring( None, self.cfg['radosbench']['monitor'] ):
 
           processes = []
-          # for p in range( process_count ):
-          #   processes.append(
-          #     self.execute_on_clients( f'''
-          #       mkdir -p {job_dir}/process-{p}
-          #       cd {job_dir}/process-{p}
-          #       {radosbench} {options}-{p} 2> stderr > stdout
-          #     '''))
+          for p in range( process_count ):
+            processes.append(
+              self.execute_on_clients( f'''
+                mkdir -p {job_dir}/process-{p}
+                cd {job_dir}/process-{p}
+                cat <<EOF | tee {job_dir}/command
+                {radosbench} {options}-{p} 2> stderr > stdout
+                EOF
+              '''))
 
-          # for process in processes:
-          #   process.wait()
+          for process in processes:
+            process.wait()
 
         self.dimensions.pop() # proc-cnt
 
@@ -805,7 +807,7 @@ class MBench( Benchmark ):
 
       for process_count in process_counts:
 
-        self.dimensions.push( 'proc-cnt', process_count )
+        self.dimensions.push( 'processes', process_count )
 
         job_dir = f'{self.run_dir}/{self.dimensions.path()}'
         fio     = f'{self.cmd_path_full}'
@@ -816,16 +818,16 @@ class MBench( Benchmark ):
         with self.monitoring( None, self.cfg['fio']['monitor'] ):
 
           processes = []
-          # for p in range( process_count ):
-          #   processes.append(
-          #     self.execute_on_clients( f'''
-          #       mkdir -p {job_dir}/process-{p}
-          #       cd {job_dir}/process-{p}
-          #       {fio} {options} 2> stderr > stdout
-          #     '''))
+          for p in range( process_count ):
+            processes.append(
+              self.execute_on_clients( f'''
+                mkdir -p {job_dir}/process-{p}
+                cd {job_dir}/process-{p}
+                # {fio} {options} 2> stderr > stdout
+              '''))
 
-          # for process in processes:
-          #   process.wait()
+          for process in processes:
+            process.wait()
 
         self.dimensions.pop() # proc-cnt
       
@@ -843,11 +845,11 @@ class MBench( Benchmark ):
     mgr_caps = f"mgr 'profile rbd pool={self.cfg['pool']['name']}, profile rbd pool={self.cfg['pool']['name']}-data'"
 
     self.execute_on_head( f'''
-      sudo mkdir -p -m 0755 {self.run_dir}
+      sudo mkdir -p {self.run_dir}
       sudo ceph auth rm {client}
       sudo ceph auth create {client} {mon_caps} {osd_caps} {mgr_caps}
       sudo ceph auth get {client} | sudo tee {self.run_dir}/ceph.keyring
-      sudo chmod g+rwX -R {self.run_dir}
+      sudo chmod a+r -R {self.run_dir}/ceph.keyring
     ''')
 
   #----------------------------------------------------------------------------#
@@ -855,7 +857,11 @@ class MBench( Benchmark ):
   def post_run_cleanup( self ):
     """
     """
-    pass
+    client = f"client.{self.cfg['clients']['ceph-auth-id']}"
+
+    self.execute_on_head( f'''
+      sudo ceph auth rm {client}
+    ''')
 
   #----------------------------------------------------------------------------#
 
