@@ -847,7 +847,7 @@ class MBench( Benchmark ):
       sudo ceph auth rm {client}
       sudo ceph auth create {client} {mon_caps} {osd_caps} {mgr_caps}
       sudo ceph auth get {client} | sudo tee {self.run_dir}/ceph.keyring
-      sudo chmod 0755 -R {self.run_dir}
+      sudo chmod g+rwX -R {self.run_dir}
     ''')
 
   #----------------------------------------------------------------------------#
