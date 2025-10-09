@@ -654,9 +654,9 @@ class MBench( Benchmark ):
     def dash( o ):
       return f'-{o}' if len(o) == 1 else f'--{o}'
     
-    job      = self.dimensions['job']['value']
-    defaults = copy.deepcopy( self.cfg['radosbench']['defaults'] )
-    options  = defaults.update( self.cfg['radosbench']['jobs'][job] )
+    job = self.dimensions['job']['value']
+    options = copy.deepcopy( self.cfg['radosbench']['defaults'] )
+    options.update( self.cfg['radosbench']['jobs'][job] )
 
     if 'duration' not in options:
       raise Exception( f"Error: For radosbench job '{job}', the mandatory 'duration' pseudo-option is missing." )
@@ -734,9 +734,9 @@ class MBench( Benchmark ):
     Returns a string containing the fio command line options for the current fio job.
     This method is only used by MBench drivers that leverage fio.
     """
-    job      = self.dimensions['job']['value']
-    defaults = copy.deepcopy( self.cfg['fio']['defaults'] )
-    options  = defaults.update( self.cfg['fio']['jobs'][job] )
+    job = self.dimensions['job']['value']
+    options = copy.deepcopy( self.cfg['fio']['defaults'] )
+    options.update( self.cfg['fio']['jobs'][job] )
 
     match self.driver:
       case 'fio-librados': forced_ioengine = 'rados'
@@ -744,7 +744,7 @@ class MBench( Benchmark ):
       case self.driver:    forced_ioengine = None
 
     forced_options = {
-      'ioengine'        : forced_ioengine or options['ioengine'],
+      'ioengine'        : forced_ioengine or options['ioengine'] or 'libaio',
       'group_reporting' : 1,
       'per_job_logs'    : 0,
       'write_bw_log'    : 'process', # => process_bw.log
