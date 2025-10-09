@@ -118,6 +118,15 @@ class MBench( Benchmark ):
     super().__init__( archive_dir, cluster, config )
     self.load_cfg( config )
     self.dimensions = MBenchDimensions()
+    self.out_dir = self.archive_dir
+
+  #----------------------------------------------------------------------------#
+
+  def log( self, message ):
+    """
+    TODO
+    """
+    logger.info( message )
 
   #----------------------------------------------------------------------------#
 
@@ -251,86 +260,82 @@ class MBench( Benchmark ):
 
   def load_cfg( self, user_cfg ):
     """
-    .
+    Loads the user configuration.
     """
     defaults = self.default_cfg() # used to re-populate any mandatory nested keys that are pruned after merging the user cfg
-    self.cfg = self.default_cfg() # start with a copy of the default cfg ...
+    self.cfg = self.default_cfg() # start with a (deep) copy of the default cfg ...
     self.cfg.update( user_cfg )   # ... then override/extend it by (shallow) merging the user cfg
 
-    for key in self.cfg.keys():
-      if key in user_cfg:
-        self.cfg
+    for section in defaults.keys():
+      for key, default_value in defaults[section].items():
+        self.cfg[section][key] = self.cfg[section].get( key, default_value )
 
-    for key in user_cfg:
-      if key in defaults:
-        self.cfg[key].update( user_cfg[key] )
-
-    client = self.cfg['client']
-    if type( client ) != dict:
-      fail( "cfg.client must be a hash/dict." )
-    client['groups'] = \
-      client.get( 'groups', defaults['client']['groups'] ) # in case user cfg is missing 'groups' key
-    if type( client['groups'] ) != dict:
-      fail( "cfg.client.groups must be a hash/dict of named client groups." )
+    for s in 'osd client'.split():
+      section = self.cfg[s]
+      if type( section ) != dict:
+        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+      for key in 'configurations'.split():
+        section[key] = section.get( key, defaults[s][key] )
+      if type( section['configurations'] ) != dict:
+        raise Exception( f"Error: MBench cfg.{s}.configurations must be a hash/dict of named {s} configurations." )
 
     pool = self.cfg['pool']
     if type( pool ) != dict:
-      fail( "cfg.pool must be a hash/dict." )
-    pool['profiles'] = \
-      pool.get( 'profiles', defaults['pool']['profiles'] ) # in case user cfg is missing 'profiles' key
-    if type( pool['options'] ) != dict:
-      fail( "cfg.pool.profiles must be a hash/dict of named pool profiles." )
-    for name, profile in pool['profiles'].items():
-      if type( profile ) != dict:
-        fail( "cfg.pool.profiles.%s must be a hash/dict." % ( name ))
+      raise Exception( "Error: MBench cfg.pool must be a hash/dict." )
+    for key in 'monitor profiles'.split():
+      pool[key] = pool.get( key, defaults[s][key] )
+    if type( pool['profiles'] ) != list:
+      raise Exception( "Error: MBench cfg.pool.profiles must be an array/list of named pool profiles from the cluster.pool_profiles cfg." )
+    for profile in pool['profiles']:
+      if type( profile ) != str:
+        raise Exception( f"Error: MBench cfg.pool.profiles.{profile} must be a string profile name from the cluster.pool_profiles cfg." )
 
     for s in 'image map mkfs mount'.split():
       section = self.cfg[s]
       cmd = { 'image':"'rbd create'", 'map':"'rbd device map'" }.get( s, s )
       if type( section ) != dict:
-        fail( "cfg.%s must be a hash/dict." % ( s ))
-      section['options'] = \
-        section.get( 'options', defaults[s]['options'] ) # in case user cfg is missing 'options' key
+        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+      for key in 'monitor options'.split():
+        section[key] = section.get( key, defaults[s][key] )
       if type( section['options'] ) != dict:
-        fail( "cfg.%s.options must be a hash/dict of named %s command options strings." % ( s, cmd ))
+        raise Exception( f"Error: MBench cfg.{s}.options must be a hash/dict of named {cmd} command line options." )
       for name, options in section['options'].items():
         if type( options ) != str:
-          fail( "cfg.%s.options.%s must be a %s command options string." % ( s, name, cmd ))
+          raise Exception( f"Error: MBench cfg.{s}.options.{name} must be a {cmd} command line option string." )
 
-    for s in 'pre-map post-map pre-mount post-mount'.split():
+    for s in 'pre-map pre-mkfs pre-mount pre-jobs'.split():
       section = self.cfg[s]
       if type( section ) != dict:
-        fail( "cfg.%s must be a hash/dict." % ( s ))
-      section['commands'] = \
-        section.get( 'commands', defaults[s]['commands'] ) # in case user cfg is missing 'commands' key
+        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+      for key in 'monitor commands'.split():
+        section[key] = section.get( key, defaults[s][key] )
       if type( section['commands'] ) != dict:
-        fail( "cfg.%s.commands must be a hash/dict of named client shell command sets." % ( s ))
+        raise Exception( f"Error: MBench cfg.{s}.commands must be a hash/dict of named groups of client shell commands." )
       for name, commands in section['commands'].items():
         for ctype in 'head tail'.split():
-          commands[ctype] = commands.get( ctype, [] ) # in case 'head' or 'tail' key is missing
+          commands[ctype] = commands.get( ctype, [] )
           if type( commands[ctype] ) != list:
-            fail( "cfg.%s.commands.%s.%s must be an array/list of client shell command strings." % ( s, name, ctype ))
+            raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
           if [ c for c in commands[ctype] if type(c) != str ].count() > 0:
-            fail( "cfg.%s.commands.%s.%s must be an array/list of client shell command strings." % ( s, name, ctype ))
+            raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
 
-    fio = self.cfg['fio']
-    if type( fio ) != dict:
-      fail( "cfg.fio must be a hash/dict." )
-    fio['defaults'] = \
-      fio.get( 'defaults', defaults['fio']['defaults'] ) # in case user cfg is missing 'defaults' key
-    if type( fio['defaults'] ) != dict:
-      fail( "cfg.fio.defaults must be a hash/dict of fio command line option name/value string pairs." )
-    if [ v for k, v in fio['defaults'].items() if type(v) != str ].count > 0:
-      fail( "cfg.fio.defaults must be a hash/dict of fio command line option name/value string pairs." )
-    fio['jobs'] = \
-      fio.get( 'jobs', defaults['fio']['jobs'] ) # in case user cfg is missing 'jobs' key
-    if type( fio['jobs'] ) != dict:
-      fail( "cfg.fio.jobs must be a hash/dict of named fio jobs." )
-    for name, job in fio['jobs'].items():
-      if type( job ) != dict:
-        fail( "cfg.fio.jobs.%s must be a hash/dict of fio command line option name/value string pairs." % ( name ))
-      if [ v for k, v in job.items() if type(v) != str ].count > 0:
-        fail( "cfg.fio.jobs.%s must be a hash/dict of fio command line option name/value string pairs." % ( name ))
+    for s in 'radosbench fio'.split():
+      section = self.cfg[s]
+      if type( section ) != dict:
+        raise Exception( f"cfg.{s} must be a hash/dict." )
+      for key in 'monitor defaults jobs'.split():
+        section[key] = section.get( key, defaults[s][key] )
+      if type( section['defaults'] ) != dict:
+        raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
+      if [ v for k, v in section['defaults'].items() if type(v) != str ].count > 0:
+        raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
+      if type( section['jobs'] ) != dict:
+        raise Exception( f"cfg.{s}.jobs must be a hash/dict of named {s} jobs." )
+      for name, job in section['jobs'].items():
+        if type( job ) != dict:
+          raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
+        if [ v for k, v in job.items() if type(v) != str ].count > 0:
+          raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
 
     if self.driver == 'fio_krbd' or self.driver == 'fio_device':
       if 'ioengine' not in self.cfg['fio']['defaults']:
@@ -342,9 +347,9 @@ class MBench( Benchmark ):
     """
     Returns .
     """
-    rbd  = self.cfg['client']['rbd-path']
+    rbd  = self.cfg['client']['rbd-path'] or self.cluster.
     user = self.cfg['client']['id']
-    conf = self.cfg['client']['conf-path']
+    conf = f'{self.run_dir}/ceph.conf'
     return f'{rbd} --id {user} --conf {conf}'
 
   #----------------------------------------------------------------------------#
@@ -646,10 +651,10 @@ class MBench( Benchmark ):
     options  = defaults.update( self.cfg['radosbench']['jobs'][job] )
 
     if 'duration' not in options:
-      fail( f"Error: For radosbench job '{job}', the mandatory 'duration' pseudo-option is missing." )
+      raise Exception( f"Error: For radosbench job '{job}', the mandatory 'duration' pseudo-option is missing." )
 
     if 'operation' not in options:
-      fail( f"Error: For radosbench job '{job}', the mandatory 'operation' pseudo-option is missing." )
+      raise Exception( f"Error: For radosbench job '{job}', the mandatory 'operation' pseudo-option is missing." )
 
     duration  = options.pop( 'duration' )
     operation = options.pop( 'operation' )
