@@ -413,6 +413,7 @@ class MBench( Benchmark ):
     """
     if enabled:
 
+      task = '' if task is None else task
       output_dir = f'{self.run_dir}/{self.dimensions.path()}/{task}'
 
       with monitoring.monitor( output_dir ):
@@ -464,16 +465,14 @@ class MBench( Benchmark ):
       self.dimensions.push( section, name )
 
       with self.monitoring( f'{section}-head-commands', self.cfg[section]['monitor'] ):
-        # for command in commands['head']:
-        #   self.execute_on_clients( command )
-        pass
+        for command in commands['head']:
+          self.execute_on_clients( command )
 
       yield
 
       with self.monitoring( f'{section}-tail-commands', self.cfg[section]['monitor'] ):
-        # for command in commands['tail']:
-        #   self.execute_on_clients( command )
-        pass
+        for command in commands['tail']:
+          self.execute_on_clients( command )
 
       self.dimensions.pop()
 
