@@ -705,7 +705,7 @@ class MBench( Benchmark ):
 
       job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
       radosbench = f'{self.cmd_path_full}'
-      options    = get_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
+      options    = self.get_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
       # self.dropcaches()
 
@@ -738,8 +738,13 @@ class MBench( Benchmark ):
     defaults = copy.deepcopy( self.cfg['fio']['defaults'] )
     options  = defaults.update( self.cfg['fio']['jobs'][job] )
 
+    match self.driver:
+      case 'fio-librados': forced_ioengine = 'rados'
+      case 'fio-librbd':   forced_ioengine = 'rbd'
+      case self.driver:    forced_ioengine = None
+
     forced_options = {
-      'ioengine'        : self.forced_fio_ioengine or options['ioengine'],
+      'ioengine'        : forced_ioengine or options['ioengine'],
       'group_reporting' : 1,
       'per_job_logs'    : 0,
       'write_bw_log'    : 'process', # => process_bw.log
