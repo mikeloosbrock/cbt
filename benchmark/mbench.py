@@ -127,17 +127,10 @@ class MBench( Benchmark ):
 
     logger.info('Pausing for 60s for idle monitoring.')
     with monitoring.monitor("%s/idle_monitoring" % self.run_dir):
-        time.sleep(60)
+      # time.sleep(60)
+      pass
 
     common.sync_files('%s/*' % self.run_dir, self.out_dir)
-
-  #----------------------------------------------------------------------------#
-
-  def log( self, message ):
-    """
-    TODO
-    """
-    logger.info( message )
 
   #----------------------------------------------------------------------------#
 
@@ -149,6 +142,14 @@ class MBench( Benchmark ):
       logger.info( f'Skipping existing test in {self.out_dir}.' )
       return True
     return False
+
+  #----------------------------------------------------------------------------#
+
+  def log( self, message ):
+    """
+    TODO
+    """
+    logger.info( message )
 
   #----------------------------------------------------------------------------#
 
@@ -281,72 +282,72 @@ class MBench( Benchmark ):
       for key, default_value in defaults[section].items():
         self.cfg[section][key] = self.cfg[section].get( key, default_value )
 
-    for s in 'osd client'.split():
-      section = self.cfg[s]
-      if type( section ) != dict:
-        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
-      for key in 'configurations'.split():
-        section[key] = section.get( key, defaults[s][key] )
-      if type( section['configurations'] ) != dict:
-        raise Exception( f"Error: MBench cfg.{s}.configurations must be a hash/dict of named {s} configurations." )
-
-    pool = self.cfg['pool']
-    if type( pool ) != dict:
-      raise Exception( "Error: MBench cfg.pool must be a hash/dict." )
-    for key in 'monitor profiles'.split():
-      pool[key] = pool.get( key, defaults[s][key] )
-    if type( pool['profiles'] ) != list:
-      raise Exception( "Error: MBench cfg.pool.profiles must be an array/list of named pool profiles from the cluster pool_profiles cfg." )
-    for profile in pool['profiles']:
-      if type( profile ) != str:
-        raise Exception( f"Error: MBench cfg.pool.profiles.{profile} must be a string profile name from the cluster pool_profiles cfg." )
-
-    for s in 'image map mkfs mount'.split():
-      section = self.cfg[s]
-      cmd = { 'image':"'rbd create'", 'map':"'rbd device map'" }.get( s, s )
-      if type( section ) != dict:
-        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
-      for key in 'monitor options'.split():
-        section[key] = section.get( key, defaults[s][key] )
-      if type( section['options'] ) != dict:
-        raise Exception( f"Error: MBench cfg.{s}.options must be a hash/dict of named {cmd} command line options." )
-      for name, options in section['options'].items():
-        if type( options ) != str:
-          raise Exception( f"Error: MBench cfg.{s}.options.{name} must be a {cmd} command line option string." )
-
-    for s in 'pre-map pre-mkfs pre-mount pre-jobs'.split():
-      section = self.cfg[s]
-      if type( section ) != dict:
-        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
-      for key in 'monitor commands'.split():
-        section[key] = section.get( key, defaults[s][key] )
-      if type( section['commands'] ) != dict:
-        raise Exception( f"Error: MBench cfg.{s}.commands must be a hash/dict of named groups of client shell commands." )
-      for name, commands in section['commands'].items():
-        for ctype in 'head tail'.split():
-          commands[ctype] = commands.get( ctype, [] )
-          if type( commands[ctype] ) != list:
-            raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
-          if [ c for c in commands[ctype] if type(c) != str ].count() > 0:
-            raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
-
-    for s in 'radosbench fio'.split():
-      section = self.cfg[s]
-      if type( section ) != dict:
-        raise Exception( f"cfg.{s} must be a hash/dict." )
-      for key in 'monitor defaults jobs'.split():
-        section[key] = section.get( key, defaults[s][key] )
-      if type( section['defaults'] ) != dict:
-        raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
-      if [ v for k, v in section['defaults'].items() if type(v) != str ].count > 0:
-        raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
-      if type( section['jobs'] ) != dict:
-        raise Exception( f"cfg.{s}.jobs must be a hash/dict of named {s} jobs." )
-      for name, job in section['jobs'].items():
-        if type( job ) != dict:
-          raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
-        if [ v for k, v in job.items() if type(v) != str ].count > 0:
-          raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
+#   for s in 'osd client'.split():
+#     section = self.cfg[s]
+#     if type( section ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+#     for key in 'configurations'.split():
+#       section[key] = section.get( key, defaults[s][key] )
+#     if type( section['configurations'] ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s}.configurations must be a hash/dict of named {s} configurations." )
+#
+#   pool = self.cfg['pool']
+#   if type( pool ) != dict:
+#     raise Exception( "Error: MBench cfg.pool must be a hash/dict." )
+#   for key in 'monitor profiles'.split():
+#     pool[key] = pool.get( key, defaults[s][key] )
+#   if type( pool['profiles'] ) != list:
+#     raise Exception( "Error: MBench cfg.pool.profiles must be an array/list of named pool profiles from the cluster pool_profiles cfg." )
+#   for profile in pool['profiles']:
+#     if type( profile ) != str:
+#       raise Exception( f"Error: MBench cfg.pool.profiles.{profile} must be a string profile name from the cluster pool_profiles cfg." )
+#
+#   for s in 'image map mkfs mount'.split():
+#     section = self.cfg[s]
+#     cmd = { 'image':"'rbd create'", 'map':"'rbd device map'" }.get( s, s )
+#     if type( section ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+#     for key in 'monitor options'.split():
+#       section[key] = section.get( key, defaults[s][key] )
+#     if type( section['options'] ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s}.options must be a hash/dict of named {cmd} command line options." )
+#     for name, options in section['options'].items():
+#       if type( options ) != str:
+#         raise Exception( f"Error: MBench cfg.{s}.options.{name} must be a {cmd} command line option string." )
+#
+#   for s in 'pre-map pre-mkfs pre-mount pre-jobs'.split():
+#     section = self.cfg[s]
+#     if type( section ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+#     for key in 'monitor commands'.split():
+#       section[key] = section.get( key, defaults[s][key] )
+#     if type( section['commands'] ) != dict:
+#       raise Exception( f"Error: MBench cfg.{s}.commands must be a hash/dict of named groups of client shell commands." )
+#     for name, commands in section['commands'].items():
+#       for ctype in 'head tail'.split():
+#         commands[ctype] = commands.get( ctype, [] )
+#         if type( commands[ctype] ) != list:
+#           raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
+#         if [ c for c in commands[ctype] if type(c) != str ].count() > 0:
+#           raise Exception( f"Error: MBench cfg.{s}.commands.{name}.{ctype} must be an array/list of client shell command strings." )
+#
+#   for s in 'radosbench fio'.split():
+#     section = self.cfg[s]
+#     if type( section ) != dict:
+#       raise Exception( f"cfg.{s} must be a hash/dict." )
+#     for key in 'monitor defaults jobs'.split():
+#       section[key] = section.get( key, defaults[s][key] )
+#     if type( section['defaults'] ) != dict:
+#       raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
+#     if [ v for k, v in section['defaults'].items() if type(v) != str ].count > 0:
+#       raise Exception( f"cfg.{s}.defaults must be a hash/dict of {s} command line option name/value pairs." )
+#     if type( section['jobs'] ) != dict:
+#       raise Exception( f"cfg.{s}.jobs must be a hash/dict of named {s} jobs." )
+#     for name, job in section['jobs'].items():
+#       if type( job ) != dict:
+#         raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
+#       if [ v for k, v in job.items() if type(v) != str ].count > 0:
+#         raise Exception( f"cfg.{s}.jobs.{name} must be a hash/dict of {s} command line option name/value pairs." )
 
   #----------------------------------------------------------------------------#
 
@@ -832,7 +833,7 @@ class MBench( Benchmark ):
     """
     This method is called by main() in cbt.py.
     """
-    super().__init__()
+    super().run()
 
     self.dimensions.reset()
 
