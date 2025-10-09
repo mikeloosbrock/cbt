@@ -646,7 +646,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def get_radosbench_job_options( self ):
+  def build_radosbench_job_options( self ):
     """
     Returns a string containing the radosbench command line options for the current radosbench job.
     This method is only used by MBench drivers that leverage radosbench.
@@ -699,37 +699,43 @@ class MBench( Benchmark ):
     Runs one or more named radosbench jobs.
     This method is only used by MBench drivers that leverage radosbench.
     """
+    process_counts = self.cfg['radosbench']['process-counts']
+
     for job in self.cfg['radosbench']['jobs']:
 
-      self.dimensions.push( 'job', job ) # used by radosbench_job_options()
+      self.dimensions.push( 'job', job ) # used by self.build_radosbench_job_options()
 
-      job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
-      radosbench = f'{self.cmd_path_full}'
-      options    = self.get_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
+      for process_count in process_counts:
 
-      # self.dropcaches()
+        self.dimensions.push( 'proc-cnt', process_count )
 
-      with self.monitoring( None, self.cfg['radosbench']['monitor'] ):
+        job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
+        radosbench = f'{self.cmd_path_full}'
+        options    = self.build_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
-        process_count = self.dimensions['procs']['value']
-        processes = []
+        # self.dropcaches()
 
-        # for p in range( process_count ):
-        #   processes.append(
-        #     self.execute_on_clients( f'''
-        #       mkdir -p {job_dir}/process-{p}
-        #       cd {job_dir}/process-{p}
-        #       {radosbench} {options}-{p} 2> stderr > stdout
-        #     '''))
+        with self.monitoring( None, self.cfg['radosbench']['monitor'] ):
 
-        # for process in processes:
-        #   process.wait()
+          processes = []
+          # for p in range( process_count ):
+          #   processes.append(
+          #     self.execute_on_clients( f'''
+          #       mkdir -p {job_dir}/process-{p}
+          #       cd {job_dir}/process-{p}
+          #       {radosbench} {options}-{p} 2> stderr > stdout
+          #     '''))
 
-      self.dimensions.pop()
+          # for process in processes:
+          #   process.wait()
+
+        self.dimensions.pop() # proc-cnt
+
+      self.dimensions.pop() # job
 
   #----------------------------------------------------------------------------#
 
-  def get_fio_job_options( self ):
+  def build_fio_job_options( self ):
     """
     Returns a string containing the fio command line options for the current fio job.
     This method is only used by MBench drivers that leverage fio.
@@ -773,33 +779,39 @@ class MBench( Benchmark ):
     Runs one or more named FIO jobs.
     This method is only used by MBench drivers that leverage fio.
     """
+    process_counts = self.cfg['fio']['process-counts']
+    
     for job in self.cfg['fio']['jobs']:
 
-      self.dimensions.push( 'job', job ) # used by fio_job_options()
+      self.dimensions.push( 'job', job ) # used by self.build_fio_job_options()
 
-      job_dir = f'{self.run_dir}/{self.dimensions.path()}'
-      fio     = f'{self.cmd_path_full}'
-      options = self.get_fio_job_options()
+      for process_count in process_counts:
 
-      # self.dropcaches()
+        self.dimensions.push( 'proc-cnt', process_count )
 
-      with self.monitoring( None, self.cfg['fio']['monitor'] ):
+        job_dir = f'{self.run_dir}/{self.dimensions.path()}'
+        fio     = f'{self.cmd_path_full}'
+        options = self.build_fio_job_options()
 
-        process_count = self.dimensions['procs']['value']
-        processes = []
+        # self.dropcaches()
 
-        # for p in range( process_count ):
-        #   processes.append(
-        #     self.execute_on_clients( f'''
-        #       mkdir -p {job_dir}/process-{p}
-        #       cd {job_dir}/process-{p}
-        #       {fio} {options} 2> stderr > stdout
-        #     '''))
+        with self.monitoring( None, self.cfg['fio']['monitor'] ):
 
-        # for process in processes:
-        #   process.wait()
+          processes = []
+          # for p in range( process_count ):
+          #   processes.append(
+          #     self.execute_on_clients( f'''
+          #       mkdir -p {job_dir}/process-{p}
+          #       cd {job_dir}/process-{p}
+          #       {fio} {options} 2> stderr > stdout
+          #     '''))
 
-      self.dimensions.pop()
+          # for process in processes:
+          #   process.wait()
+
+        self.dimensions.pop() # proc-cnt
+      
+      self.dimensions.pop() # job
 
   #----------------------------------------------------------------------------#
 
