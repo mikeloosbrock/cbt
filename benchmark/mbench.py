@@ -172,8 +172,8 @@ class MBench( Benchmark ):
               tail: []             #
 
       client:                      # controls ...
-        user-id: cbt               #
-        user-key:                  #
+        ceph-auth-id: cbt          #
+        ceph-auth-key: AQAQKdRoiCYVLBAAym0+C2RdCAAc1I+JkmC8MA==            #
         configurations:            # named client configurations
           default:                 # configuration name
             hosts: '*'             # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
@@ -668,11 +668,11 @@ class MBench( Benchmark ):
     operation = options.pop( 'operation' )
 
     forced_options = {
-      'id'         : self.cfg['client']['id'],
-      'conf'       : self.conf_path,
+      'id'         : self.cfg['client']['ceph-auth-id'],
+      'conf'       : f'{self.run_dir}',
       'pool'       : self.cfg['pool']['name'],
       'no-cleanup' : None,
-      'run-name'   : f'`hostname -s`',
+      'run-name'   : f'`hostname -f`',
     }
 
     for o, v in forced_options.items():
