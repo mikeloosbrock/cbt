@@ -159,7 +159,7 @@ class MBench( Benchmark ):
     """
     return yaml.safe_load('''
 
-      osd:                         # controls ...
+      osds:                        # controls ...
         configurations:            # named osd configurations
           default:                 # configuration name
             sysctl-settings: {}    #
@@ -171,12 +171,11 @@ class MBench( Benchmark ):
               head: []             #
               tail: []             #
 
-      client:                      # controls ...
-        ceph-auth-id: cbt          #
-        ceph-auth-key: AQAQKdRoiCYVLBAAym0+C2RdCAAc1I+JkmC8MA==            #
+      clients:                     # controls ...
+        ceph-auth-id: cbt-mbench   #
         configurations:            # named client configurations
           default:                 # configuration name
-            hosts: '*'             # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
+            nodes: '*'             # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
             sysctl-settings: {}    #
             sysfs-settings: {}     #
             tell-commands:         #
@@ -188,13 +187,13 @@ class MBench( Benchmark ):
 
       pool:                        # controls how benchmark pools are created
         monitor: false             # enable/disable performance monitoring of pool creation/removal
-        name: cbt                  # pool name, probably no reason to ever change this
+        name: cbt-mbench           # pool name, probably no reason to ever change this
         profiles:                  # ?
           - replica-2
 
-      image:                       # controls how per-client RBD images are created - only used by MBench drivers that use RBD
+      images:                      # controls how per-client RBD images are created - only used by MBench drivers that use RBD
         monitor: true              # enable/disable performance monitoring of RBD image creation/removal
-        name-prefix: ''            # this string is always appended with "`hostname -f`-" to ensure pool-global unique RBD image names
+        name-prefix: ''            # this string is always appended with "`hostname -s`-" to ensure pool-global unique RBD image names
         per-client-counts: [ 1 ]   # array of integers, each being a number of RBD images to use per client
         options:                   # named option strings, each being passed as-is to the 'rbd create' cli command
           default: --size 1TB
@@ -284,15 +283,15 @@ class MBench( Benchmark ):
       for key, default_value in defaults[section].items():
         self.cfg[section][key] = self.cfg[section].get( key, default_value )
 
-#   for s in 'osd client'.split():
-#     section = self.cfg[s]
-#     if type( section ) != dict:
-#       raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
-#     for key in 'configurations'.split():
-#       section[key] = section.get( key, defaults[s][key] )
-#     if type( section['configurations'] ) != dict:
-#       raise Exception( f"Error: MBench cfg.{s}.configurations must be a hash/dict of named {s} configurations." )
-#
+    for s in 'osds clients'.split():
+      section = self.cfg[s]
+      if type( section ) != dict:
+        raise Exception( f"Error: MBench cfg.{s} must be a hash/dict." )
+      for key in 'configurations'.split():
+        section[key] = section.get( key, defaults[s][key] )
+      if type( section['configurations'] ) != dict:
+        raise Exception( f"Error: MBench cfg.{s}.configurations must be a hash/dict of named configurations." )
+ 
 #   pool = self.cfg['pool']
 #   if type( pool ) != dict:
 #     raise Exception( "Error: MBench cfg.pool must be a hash/dict." )
@@ -358,7 +357,7 @@ class MBench( Benchmark ):
     Returns .
     """
     rbd  = 'rbd' #self.cfg['client']['rbd-path'] or self.cluster.
-    user = self.cfg['client']['id']
+    user = self.cfg['clients']['ceph-auth-id']
     conf = f'{self.run_dir}/ceph.conf'
     return f'{rbd} --id {user} --conf {conf}'
 
@@ -367,9 +366,9 @@ class MBench( Benchmark ):
   def image_count( self ):
     """
     Returns the number of images to use per client.
-    The return value changes as different cfg.image.per-client-counts are traversed in self.image_variations().
+    The return value changes as different cfg.images.per-client-counts are traversed in self.image_variations().
     """
-    return self.dimensions['image-count']['value']
+    return self.dimensions['image-cnt']['value']
 
   #----------------------------------------------------------------------------#
 
@@ -380,7 +379,7 @@ class MBench( Benchmark ):
     Also note that the image name portion contains shell expansion syntax to get client FQDNs.
     Therfore the returned string should only be used in shell commands executed on clients.
     """
-    return f"{self.cfg['pool']['name']}/`hostname -f`-"
+    return f"{self.cfg['pool']['name']}/`hostname -s`-"
 
   #----------------------------------------------------------------------------#
 
@@ -393,16 +392,34 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def execute_on_clients( self, command ):
+  def execute_on_head( self, commands, continue_if_error=False ):
     """
-    Executes a shell command on the current client group.
-    The client hosts used changes as different cfg.client.groups are traversed in self.client_variations().
+    Executes shell commands on the head node, which is usually configured to be one of the cluster mon/mgr nodes.
     """
-    group = self.dimensions['client']['value']
-    hosts = self.cfg['client']['groups'][group]['hosts']
-    hosts = settings.getnodes( 'clients' ) if hosts == '*' else ','.join( hosts )
+    node = settings.getnodes( 'head' )
+    return common.pdsh( node, commands, continue_if_error ).communicate()
 
-    return common.pdsh( hosts, command, continue_if_error=False ).communicate()
+  #----------------------------------------------------------------------------#
+
+  def execute_on_osds( self, commands, continue_if_error=False ):
+    """
+    Executes shell commands on the osd nodes.
+    """
+    nodes = settings.getnodes( 'osds' )
+    return common.pdsh( node, command, continue_if_error ).communicate()
+
+  #----------------------------------------------------------------------------#
+
+  def execute_on_clients( self, commands, continue_if_error=False ):
+    """
+    Executes shell commands on the currently active client nodes.
+    The active client nodes change as different cfg.client.configurations are traversed in self.client_variations().
+    """
+    group = self.dimensions['clients']['value']
+    nodes = self.cfg['clients']['groups'][group]['nodes']
+    nodes = settings.getnodes( 'clients' ) if nodes == '*' else ','.join( nodes )
+
+    return common.pdsh( nodes, commands, continue_if_error ).communicate()
 
   #----------------------------------------------------------------------------#
 
@@ -413,10 +430,10 @@ class MBench( Benchmark ):
     """
     if enabled:
 
-      task = '' if task is None else task
-      output_dir = f'{self.run_dir}/{self.dimensions.path()}/{task}'
+      task = '' if task is None else task # None means no task subdir
+      path = f'{self.run_dir}/{self.dimensions.path()}/monitoring/{task}'
 
-      with monitoring.monitor( output_dir ):
+      with monitoring.monitor( path ):
         yield
 
     else:
@@ -430,9 +447,9 @@ class MBench( Benchmark ):
     """
     Creates OSD variations using one or more named OSD configurations.
     """
-    for name, configuration in self.cfg['osd']['configurations'].items():
+    for name, configuration in self.cfg['osds']['configurations'].items():
 
-      self.dimensions.push( 'osd', name )
+      self.dimensions.push( 'osds', name )
       
       yield
 
@@ -445,9 +462,9 @@ class MBench( Benchmark ):
     """
     Creates client variations using one or more named client configurations.
     """
-    for name, configuration in self.cfg['client']['configurations'].items():
+    for name, configuration in self.cfg['clients']['configurations'].items():
 
-      self.dimensions.push( 'client', name ) # used by self.execute_on_clients()
+      self.dimensions.push( 'clients', name ) # used by self.execute_on_clients()
 
       yield
 
@@ -464,13 +481,13 @@ class MBench( Benchmark ):
 
       self.dimensions.push( section, name )
 
-      with self.monitoring( f'{section}-head-commands', self.cfg[section]['monitor'] ):
+      with self.monitoring( f'{section}-head', self.cfg[section]['monitor'] ):
         for command in commands['head']:
           self.execute_on_clients( command )
 
       yield
 
-      with self.monitoring( f'{section}-tail-commands', self.cfg[section]['monitor'] ):
+      with self.monitoring( f'{section}-tail', self.cfg[section]['monitor'] ):
         for command in commands['tail']:
           self.execute_on_clients( command )
 
@@ -510,14 +527,14 @@ class MBench( Benchmark ):
     This method is only used by MBench drivers that use RBD images.
     Note that RBD image creation/removal commands are executed from clients, not the head host.
     """
-    image_counts = self.cfg['image']['per-client-counts']
+    image_counts = self.cfg['images']['per-client-counts']
 
     for name, options in self.cfg['image']['options'].items():
 
-      self.dimensions.push( 'image', name )
+      self.dimensions.push( 'images', name )
 
       # Create all images (the max count) up front, instead of recreating them for each image count variation.
-      with self.monitoring( 'create-images', self.cfg['image']['monitor'] ):
+      with self.monitoring( 'create-images', self.cfg['images']['monitor'] ):
         # self.execute_on_clients( f'''
         #   for i in {{1..{max(image_counts)}}}; do
         #     sudo {self.rbd()} create {self.pool_image()}$i {options}
@@ -527,14 +544,14 @@ class MBench( Benchmark ):
 
       for image_count in image_counts:
 
-        self.dimensions.push( 'image-count', image_count ) # used by self.image_count()
+        self.dimensions.push( 'image-cnt', image_count ) # used by self.image_count()
 
         yield
 
         self.dimensions.pop() # image-count
 
       # Delete all images at the end.
-      with self.monitoring( 'remove-images', self.cfg['image']['monitor'] ):
+      with self.monitoring( 'remove-images', self.cfg['images']['monitor'] ):
         # self.execute_on_clients( f'''
         #   for i in {{1..{max(image_counts)}}}; do
         #     sudo {self.rbd()} rm {self.pool_image()}$i
@@ -587,7 +604,7 @@ class MBench( Benchmark ):
     """
     for name, options in self.cfg['mkfs']['options'].items():
 
-      self.dimensions.push( 'mkfs', name, options )
+      self.dimensions.push( 'mkfs', name ) # used by self.mount_variations()
 
       if options:
         with self.monitoring( 'make-filesystems', self.cfg['mkfs']['monitor'] ):
@@ -611,9 +628,9 @@ class MBench( Benchmark ):
     If the RBD image does not have a filesystem (because the mkfs options were null/None), it is not mounted/unmounted.
     This method is only used by MBench drivers that map and mount RBD images.
     """
-    if self.dimensions['mkfs']['value'] == None: # image does not have a filesystem, so skip mount variations
+    if self.dimensions['fs']['value'] == None: # image does not have a filesystem, so skip mount variations
 
-      self.dimensions.push( 'mount', '-' )
+      self.dimensions.push( 'mount', '' )
 
       yield
 
@@ -816,24 +833,33 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def setup_hosts( self ):
+  def pre_run_setup( self ):
     """
     TODO
     """
-    hosts = settings.getnodes( 'osds', 'clients' )
-    # commands = f'''
-    #   sudo mkdir -p -m 0755 {self.run_dir}
-    #   cd {self.run_dir}
-    #   sudo 
-    #   echo '' | sudo tee ceph.conf
-    # '''
-    # common.pdsh( hosts, commands, continue_if_error=False )
+    client   = f"client.{self.cfg['client']['ceph-auth-id']}"
+    key      = self.cfg['client']['ceph-auth-key']
+    mon_caps = f"mon 'profile rbd'"
+    osd_caps = f"osd 'allow * pool={self.cfg['pool']['name']}, allow * pool={self.cfg['pool']['name']}-data'"
+    mgr_caps = f"mgr 'profile rbd pool={self.cfg['pool']['name']}, profile rbd pool={self.cfg['pool']['name']}-data'"
+
+    self.execute_on_head( f'''
+      sudo mkdir -p -m 0755 {self.run_dir}
+      sudo ceph auth get-or-create {client} {mon_caps} {osd_caps} {mgr_caps} > {self.run_dir}/ceph.keyring
+    ''')
+
+  #----------------------------------------------------------------------------#
+  
+  def post_run_cleanup( self ):
+    """
+    """
+    pass
 
   #----------------------------------------------------------------------------#
 
   def run_variations( self ):
     """
-    TODO
+    This method is to be implemented by MBench driver-specific subclasses.
     """
     pass
 
@@ -852,9 +878,8 @@ class MBench( Benchmark ):
     This method is called by main() in cbt.py.
     """
     super().run()
-
+    self.pre_run_setup()
     self.dimensions.reset()
-
-    self.setup_hosts()
     self.run_variations()
     self.gather_results()
+    self.post_run_cleanup()
