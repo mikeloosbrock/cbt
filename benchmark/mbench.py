@@ -116,7 +116,7 @@ class MBench( Benchmark ):
     Extends the base Benchmark initializer.
     """
     super().__init__( archive_dir, cluster, config )
-    self.load_cfg()
+    self.load_cfg( config )
     self.dimensions = MBenchDimensions()
 
   #----------------------------------------------------------------------------#
@@ -134,7 +134,7 @@ class MBench( Benchmark ):
 
   def default_cfg( self ):
     """
-    Returns a copy of the default cfg that is overridden/extended by the user cfg in load_cfg().
+    Returns a copy of the default cfg that is overridden/extended by the user cfg in self.load_cfg().
     """
     return yaml.safe_load('''
 
@@ -249,13 +249,13 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def load_cfg( self ):
+  def load_cfg( self, user_cfg ):
     """
     .
     """
     defaults = self.default_cfg() # used to re-populate any mandatory nested keys that are pruned after merging the user cfg
     self.cfg = self.default_cfg() # start with a copy of the default cfg ...
-    self.cfg.update( cfg )   # ... then override/extend it by (shallow) merging the user cfg
+    self.cfg.update( user_cfg )   # ... then override/extend it by (shallow) merging the user cfg
 
     for key in self.cfg.keys():
       if key in user_cfg:
