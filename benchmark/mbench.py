@@ -122,6 +122,17 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
+  def initialize(self):
+    super().initialize()
+
+    logger.info('Pausing for 60s for idle monitoring.')
+    with monitoring.monitor("%s/idle_monitoring" % self.run_dir):
+        time.sleep(60)
+
+    common.sync_files('%s/*' % self.run_dir, self.out_dir)
+
+  #----------------------------------------------------------------------------#
+
   def log( self, message ):
     """
     TODO
