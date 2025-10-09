@@ -484,9 +484,9 @@ class MBench( Benchmark ):
     """
     pool = self.cfg['pool']['name']
 
-    for name, profile in self.cfg['pool']['profiles'].items():
+    for profile in self.cfg['pool']['profiles']:
 
-      self.dimensions.push( 'pool', name )
+      self.dimensions.push( 'pool', profile )
 
       with self.monitoring( 'create-pool', self.cfg['pool']['monitor'] ):
         # self.cluster.mkpool( ? )
