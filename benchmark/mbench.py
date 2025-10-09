@@ -155,7 +155,7 @@ class MBench( Benchmark ):
         user-key:                  #
         configurations:            # named client configurations
           default:                 # configuration name
-            hosts: *               # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
+            hosts: '*'             # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
             sysctl-settings: {}    #
             sysfs-settings: {}     #
             tell-commands:         #
@@ -169,12 +169,11 @@ class MBench( Benchmark ):
         monitor: false             # enable/disable performance monitoring of pool creation/removal
         name: cbt                  # pool name, probably no reason to ever change this
         profiles:                  # ?
-          replica-x4:
-          ec-k8-m4:
+          - replica-2
 
       image:                       # controls how per-client RBD images are created - only used by MBench drivers that use RBD
         monitor: true              # enable/disable performance monitoring of RBD image creation/removal
-        name-prefix: ""            # this string is always appended with "`hostname -s`-" to ensure pool-global unique RBD image names
+        name-prefix: ''            # this string is always appended with "`hostname -s`-" to ensure pool-global unique RBD image names
         per-client-counts: [ 1 ]   # must contain one or more integer values, each being a number of RBD images to create per client
         options:                   # named option strings, each being passed as-is to the 'rbd create' cli command
           default: --size 1TB
@@ -189,7 +188,7 @@ class MBench( Benchmark ):
       map:                         # controls how RBD images are mapped on clients - only used by MBench drivers that use RBD
         monitor: false             # enable/disable performance monitoring of RBD image mapping/unmapping
         options:                   # named option strings, each being single-quoted and passed as the value of the --options option of the 'rbd device map' cli command
-          default: ""              # => no extra options
+          default: ''              # => no extra options
 
       pre-mkfs:                    # shell commands to run on clients before creating RBD image filesystems - only used by MBench drivers that use RBD
         monitor: false             # enable/disable performance monitoring of the commands
