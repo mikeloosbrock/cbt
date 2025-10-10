@@ -666,7 +666,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def build_radosbench_job_options( self ):
+  def radosbench_job_options( self ):
     """
     Returns a string containing the radosbench command line options for the current radosbench job.
     This method is only used by MBench drivers that leverage radosbench.
@@ -689,10 +689,10 @@ class MBench( Benchmark ):
 
     forced_options = {
       'id'         : self.cfg['clients']['ceph-auth-id'],
-      'conf'       : f'{self.run_dir}',
+      'conf'       : f'{self.run_dir}/ceph.conf',
       'pool'       : self.cfg['pool']['name'],
-      'no-cleanup' : None,
-      'run-name'   : f'`hostname -f`',
+      'no-cleanup' : '',
+      'run-name'   : f'`hostname -s`',
     }
 
     for o, v in forced_options.items():
@@ -723,7 +723,7 @@ class MBench( Benchmark ):
 
     for job in self.cfg['radosbench']['jobs']:
 
-      self.dimensions.push( 'job', job ) # used by self.build_radosbench_job_options()
+      self.dimensions.push( 'job', job ) # used by self.radosbench_job_options()
 
       for process_count in process_counts:
 
@@ -731,7 +731,7 @@ class MBench( Benchmark ):
 
         job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
         radosbench = f'{self.cmd_path_full}'
-        options    = self.build_radosbench_job_options() # --run-name must be the last option so a job process index can be appended
+        options    = self.radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
         self.dropcaches()
 
@@ -757,7 +757,7 @@ class MBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def build_fio_job_options( self ):
+  def fio_job_options( self ):
     """
     Returns a string containing the fio command line options for the current fio job.
     This method is only used by MBench drivers that leverage fio.
@@ -805,7 +805,7 @@ class MBench( Benchmark ):
     
     for job in self.cfg['fio']['jobs']:
 
-      self.dimensions.push( 'job', job ) # used by self.build_fio_job_options()
+      self.dimensions.push( 'job', job ) # used by self.fio_job_options()
 
       for process_count in process_counts:
 
@@ -813,7 +813,7 @@ class MBench( Benchmark ):
 
         job_dir = f'{self.run_dir}/{self.dimensions.path()}'
         fio     = f'{self.cmd_path_full}'
-        options = self.build_fio_job_options()
+        options = self.fio_job_options()
         command = f'{fio} {options} 2> stderr > stdout'
 
         # self.dropcaches()
