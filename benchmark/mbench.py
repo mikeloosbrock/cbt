@@ -730,7 +730,7 @@ class MBench( Benchmark ):
         self.dimensions.push( 'procs', process_count )
 
         job_dir    = f'{self.run_dir}/{self.dimensions.path()}'
-        radosbench = f'{self.cmd_path_full}'
+        radosbench = 'radosbench' # f'{self.cmd_path_full}'
         options    = self.radosbench_job_options() # --run-name must be the last option so a job process index can be appended
 
         self.dropcaches()
