@@ -739,13 +739,11 @@ class MBench( Benchmark ):
 
           processes = []
           for p in range( process_count ):
-            command = f'{radosbench} {options}-{p} 2> stderr > stdout'
             processes.append(
               self.execute_on_clients( f'''
-                mkdir -p {job_dir}/proc-{p}
+                mkdir -p -m 0755 {job_dir}/proc-{p}
                 cd {job_dir}/proc-{p}
-                cat | tee {job_dir}/command <<EOF\n{command}\nEOF
-                # {command}
+                {radosbench} {options}-{p} 2> stderr > stdout
               '''))
 
           for process in processes:
@@ -814,7 +812,6 @@ class MBench( Benchmark ):
         job_dir = f'{self.run_dir}/{self.dimensions.path()}'
         fio     = f'{self.cmd_path_full}'
         options = self.fio_job_options()
-        command = f'{fio} {options} 2> stderr > stdout'
 
         # self.dropcaches()
 
@@ -824,10 +821,9 @@ class MBench( Benchmark ):
           for p in range( process_count ):
             processes.append(
               self.execute_on_clients( f'''
-                mkdir -p {job_dir}/proc-{p}
+                mkdir -p -m 0755 {job_dir}/proc-{p}
                 cd {job_dir}/proc-{p}
-                cat | tee {job_dir}/command <<EOF\n{command}\nEOF
-                # {command}
+                {fio} {options} 2> stderr > stdout
               '''))
 
           for process in processes:
@@ -849,11 +845,10 @@ class MBench( Benchmark ):
     mgr_caps = f"mgr 'profile rbd pool={self.cfg['pool']['name']}, profile rbd pool={self.cfg['pool']['name']}-data'"
 
     self.execute_on_head( f'''
-      sudo mkdir -p {self.run_dir}
+      mkdir -p -m 0755 {self.run_dir}
       sudo ceph auth rm {client}
-      sudo ceph auth create {client} {mon_caps} {osd_caps} {mgr_caps}
+      sudo ceph auth add {client} {mon_caps} {osd_caps} {mgr_caps}
       sudo ceph auth get {client} | sudo tee {self.run_dir}/ceph.keyring
-      sudo chmod a+r -R {self.run_dir}/ceph.keyring
     ''')
 
   #----------------------------------------------------------------------------#
