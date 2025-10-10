@@ -743,7 +743,7 @@ class MBench( Benchmark ):
               self.execute_on_clients( f'''
                 mkdir -p -m 0755 {job_dir}/proc-{p}
                 cd {job_dir}/proc-{p}
-                {radosbench} {options}-{p} 2> stderr > stdout
+                # {radosbench} {options}-{p} 2> stderr > stdout
               '''))
 
           for process in processes:
@@ -823,7 +823,7 @@ class MBench( Benchmark ):
               self.execute_on_clients( f'''
                 mkdir -p -m 0755 {job_dir}/proc-{p}
                 cd {job_dir}/proc-{p}
-                {fio} {options} 2> stderr > stdout
+                # {fio} {options} 2> stderr > stdout
               '''))
 
           for process in processes:
