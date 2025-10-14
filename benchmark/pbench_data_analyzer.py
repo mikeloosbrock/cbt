@@ -1,44 +1,44 @@
-class MBenchDataAnalyzer( DataAnalyzer ):
+class PBenchDataAnalyzer( DataAnalyzer ):
   """
-  Base data analayzer for Multidimensional Benchmarks (MBench).
+  Base data analayzer for Permutation Benchmarks (PBench).
   """
 
   #----------------------------------------------------------------------------#
 
   def __init__( self, archive_dir, run, host, proc ):
     """
-    MBenchDataAnalyzer initializer.
+    PBenchDataAnalyzer initializer.
     """
     super().__init__( archive_dir, run, host, proc )
 
 #==============================================================================#
 #==============================================================================#
 
-class MBenchRadosbenchDataAnalyzer( MBenchDataAnalyzer ):
+class PBenchRadosbenchDataAnalyzer( PBenchDataAnalyzer ):
   """
-  Data analyzer for MBench benchmarks that use the radosbench driver.
+  Data analyzer for PBench benchmarks that use the radosbench driver.
   """
 
   #----------------------------------------------------------------------------#
 
   def __init__( self, archive_dir, run, host, proc ):
     """
-    Extends the base MBenchDataAnalyzer initializer.
+    Extends the base PBenchDataAnalyzer initializer.
     """
     super().__init__( archive_dir, run, host, proc )
 
 #==============================================================================#
 #==============================================================================#
 
-class MBenchFioDataAnalyzer( MBenchDataAnalyzer ):
+class PBenchFioDataAnalyzer( PBenchDataAnalyzer ):
   """
-  Data analyzer for MBench benchmarks that use fio-* drivers.
+  Data analyzer for PBench benchmarks that use fio-* drivers.
   """
 
   #----------------------------------------------------------------------------#
 
   def __init__( self, archive_dir, run, host, proc ):
     """
-    Extends the base MBenchDataAnalyzer initializer.
+    Extends the base PBenchDataAnalyzer initializer.
     """
     super().__init__( archive_dir, run, host, proc )
