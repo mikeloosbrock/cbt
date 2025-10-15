@@ -153,114 +153,119 @@ class PBench( Benchmark ):
     """
     return yaml.safe_load('''
 
-      osds:                        # controls ...
-        configurations:            # named osd configurations
-          default:                 # configuration name
-            sysctl-settings: {}    #
-            sysfs-settings: {}     #
-            tell-commands:         #
-              head: []             #
-              tail: []             #
-            shell-commands:        #
-              head: []             #
-              tail: []             #
+      osd:                              # controls ...
+        configurations:                 # named osd configurations
+          default:                      # configuration name
+            sysctl-settings: {}         #
+            sysfs-settings: {}          #
+            tell-commands:              #
+              head: []                  #
+              tail: []                  #
+            shell-commands:             #
+              head: []                  #
+              tail: []                  #
 
-      clients:                     # controls ...
-        ceph-auth-id: cbt-pbench   #
-        configurations:            # named client configurations
-          default:                 # configuration name
-            nodes: '*'             # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
-            sysctl-settings: {}    #
-            sysfs-settings: {}     #
-            tell-commands:         #
-              head: []             #
-              tail: []             #
-            shell-commands:        #
-              head: []             #
-              tail: []             #
+      client:                           # controls ...
+        ceph-auth-id: cbt-pbench        #
+        configurations:                 # named client configurations
+          default:                      # configuration name
+            nodes: '*'                  # client host list, must contain one or more dns-resolvable hostnames or '*' to use all clients defined in the cluster cfg
+            sysctl-settings: {}         #
+            sysfs-settings: {}          #
+            tell-commands:              #
+              head: []                  #
+              tail: []                  #
+            shell-commands:             #
+              head: []                  #
+              tail: []                  #
 
-      pool:                        # controls how benchmark pools are created
-        monitor: false             # enable/disable performance monitoring of pool creation/removal
-        name: cbt-pbench           # pool name, probably no reason to ever change this
-        profiles:                  # ?
-          - replica-2
+      pool:                             # controls how benchmark pools are created
+        monitor: false                  # enable/disable performance monitoring of pool creation/removal
+        name: cbt-pbench                # pool name - there's probably no reason to ever change this
+        permutations:                   # named pool permutations
+          default:                      # permutation name
+            profile: replica-2          # 
 
-      image:                       # controls how per-client RBD images are created - only used by PBench drivers that use RBD
-        monitor: true              # enable/disable performance monitoring of RBD image creation/removal
-        name-prefix: ''            # this string is always appended with "`hostname -s`-" to ensure pool-global unique RBD image names
-        permutations:              # named option strings, each being passed as-is to the 'rbd create' cli command
-          default:
-            rbd-create-options: --size 1TB
+      image:                            # controls how RBD images are created - only used by PBench drivers that use RBD
+        monitor: true                   # enable/disable performance monitoring of RBD image creation/removal
+        name-prefix: '`hostname -s`-'   # ensures pool-global unique RBD image names
+        permutations:                   # named image permutations
+          default:                      # permutation name
+            rbd-options: --size 1TB     # options passed as-is to the 'rbd create' command
+            images-per-client: 1        # how many images to use per client
 
-      pre-map:                     # shell commands to run on clients before mapping RBD images - only used by PBench drivers that use RBD
-        monitor: false             # enable/disable performance monitoring of the commands
-        permutations:              # named command permutations
-          default:                 # permutation name
-            head: []               # commands to run before mapping RBD images
-            tail: []               # commands to undo or clean up the head commands, after unmapping RBD images
+      pre-map:                          # shell commands to run on clients before mapping RBD images - only used by PBench drivers that use RBD
+        monitor: false                  # enable/disable performance monitoring of the commands
+        permutations:                   # named command permutations
+          default:                      # permutation name
+            head: []                    # commands to run before mapping RBD images
+            tail: []                    # commands to undo or clean up the head commands, after unmapping RBD images
 
-      map:                         # controls how RBD images are mapped on clients - only used by PBench drivers that use RBD
-        monitor: false             # enable/disable performance monitoring of RBD image mapping/unmapping
-        permutations:              # named mapping permutations
-          default: ''              # => no extra options
+      map:                              # controls how RBD images are mapped - only used by PBench drivers that use RBD
+        monitor: false                  # enable/disable performance monitoring of RBD image mapping/unmapping
+        permutations:                   # named mapping permutations
+          default:                      # permutation name
+            rbd-options: ''             # options passed as-is to the 'rbd map' command
 
-      pre-fs:                      # shell commands to run on clients before creating RBD image filesystems - only used by PBench drivers that use RBD
-        monitor: false             # enable/disable performance monitoring of the commands
-        permutations:              # named command permutations to iterate over
-          default:                 # permutation name
-            head: []               # group commands to run before creating filesystems on RBD images
-            tail: []               # group commands to undo or clean up the head commands, after unmounting RBD images
+      pre-fs:                           # shell commands to run on clients before creating RBD image filesystems - only used by PBench drivers that use RBD
+        monitor: false                  # enable/disable performance monitoring of the commands
+        permutations:                   # named command permutations
+          default:                      # permutation name
+            head: []                    # commands to run before creating filesystems on RBD images
+            tail: []                    # commands to undo or clean up the head commands, after unmounting RBD images
 
-      fs:                          # controls how RBD image filesystems are created - only used by PBench drivers that use RBD
-        monitor: true              # enable/disable performance monitoring of RBD image filesystem creation
-        permutations:              # named option strings, each being passed as-is to the 'mkfs' cli command
-          default: -t xfs          # => create a default XFS filesystem - setting to the null value instead causes no filesystem to be created
+      fs:                               # controls how RBD image filesystems are created - only used by PBench drivers that use RBD
+        monitor: true                   # enable/disable performance monitoring of RBD image filesystem creation
+        permutations:                   # named filesystem permutations
+          default:                      # permutation name
+            mkfs-options: -t xfs        # options passed as-is to the mkfs command - if set to null, no filesystem will be created
 
-      pre-mount:                   # shell commands to run on clients before mounting RBD image filesystems - only used by PBench drivers that use RBD, and when RBD image filesystems are created
-        monitor: false             # enable/disable performance monitoring of the commands
-        commands:                  # named groups of commands
-          default:                 # group name
-            head: []               # group commands to run before mounting RBD image filesystems
-            tail: []               # group commands to undo or clean up the head commands, after unmounting RBD image filesystems
+      pre-mount:                        # shell commands to run on clients before mounting RBD image filesystems - only used by PBench drivers that use RBD, and when RBD image filesystems are created
+        monitor: false                  # enable/disable performance monitoring of the commands
+        permutations:                   # named command permutations
+          default:                      # permutation name
+            head: []                    # commands to run before mounting RBD image filesystems
+            tail: []                    # commands to undo or clean up the head commands, after unmounting RBD image filesystems
 
-      mount:                       # controls how RBD image filesystems are mounted - only used by PBench drivers that use RBD, and when RBD image filesystems are created
-        monitor: false             # enable/disable performance monitoring of RBD image filesystem mounting/unmounting
-        options:                   # named option strings, each being passed as-is to the 'mount' cli command
-          default: defaults        # => rw,suid,dev,exec,auto,nousr,async (possibly others depending on the filesystem type)
+      mount:                            # controls how RBD image filesystems are mounted on clients - only used by PBench drivers that use RBD, and when RBD image filesystems are created
+        monitor: false                  # enable/disable performance monitoring of RBD image filesystem mounting/unmounting
+        permutations:                   # named mounting permutations
+          default:                      # permutation name
+            mount-options: defaults     # options passed as is to the mount command - 'defaults' => rw,suid,dev,exec,auto,nousr,async (possibly others depending on the filesystem type)
 
-      pre-test:                    # shell commands to run on clients before running radosbench or fio tests
-        monitor: false             # enable/disable performance monitoring of the commands
-        commands:                  # named groups of commands
-          default:                 # group name
-            head: []               # group commands to run before running radosbench or fio tests
-            tail: []               # group commands to undo or clean up the head commands, after running radosbench or fio tests
+      pre-test:                         # shell commands to run on clients before running radosbench or fio tests
+        monitor: false                  # enable/disable performance monitoring of the commands
+        permutations:                   # named command permutations
+          default:                      # permutation name
+            head: []                    # commands to run before running radosbench or fio tests
+            tail: []                    # commands to undo or clean up the head commands, after running radosbench or fio tests
 
-      radosbench:                  # controls how radosbench tests are run on clients
-        monitor: true              # enable/disable performance monitoring of radosbench tests
-        defaults:                  # radosbench cmd line options used for every test unless there is a test-specific override
-          processes: 1             # 
-          duration: 30             # pseudo-option that maps to the radosbench positional argument that controls the test duration
-          o: 4096                  #
-        tests:                     # named radosbench tests
-          read:                    # read test
-            operation: read        # pseudo-option that maps to the radosbench positional argument that controls the test IO operation
-          write:                   # write test
-            operation: write       # pseudo-option that maps to the radosbench positional argument that controls the test IO operation
+      radosbench:                       # controls how radosbench tests are run on clients
+        monitor: true                   # enable/disable performance monitoring of radosbench tests
+        defaults:                       # radosbench cmd line options used for every test unless there is a test-specific override
+          processes: 1                  # pseudo-option to control how many concurrent processes to use for the test (each 
+          duration: 30                  # pseudo-option that maps to the radosbench positional argument that controls the test duration
+          o: 4096                       #
+        tests:                          # named radosbench tests
+          read:                         # read test
+            operation: read             # pseudo-option that maps to the radosbench positional argument that controls the test IO operation
+          write:                        # write test
+            operation: write            # pseudo-option that maps to the radosbench positional argument that controls the test IO operation
 
-      fio:                         # controls how fio tests are run on clients
-        monitor: true              # enable/disable performance monitoring of fio tests
-        defaults:                  # fio cmd line options used for every test unless there is a test-specific override
-          processes: 1             # 
-          ioengine:  libaio        # this is forcefully overridden for certain PBench drivers
-          rwmixread: 50            #
-          blocksize: 4096          #
-          iodepth:   32            #
-          runtime:   30            #
-        tests:                     # named fio tests
-          read:
-            readwrite: read
-          write:
-            readwrite: write
+      fio:                              # controls how fio tests are run on clients
+        monitor: true                   # enable/disable performance monitoring of fio tests
+        defaults:                       # fio cmd line options used for every test unless there is a test-specific override
+          processes: 1                  # pseudo-option to control how many concurrent processes are used, works slightly differently than the numjobs option
+          ioengine:  libaio             # this is forcefully overridden for certain PBench drivers
+          rwmixread: 50                 #
+          blocksize: 4096               #
+          iodepth:   32                 #
+          runtime:   30                 #
+        tests:                          # named fio tests
+          read:                         # read test
+            readwrite: read             #
+          write:                        # write test
+            readwrite: write            # 
     ''')
 
   #----------------------------------------------------------------------------#
@@ -277,14 +282,14 @@ class PBench( Benchmark ):
       for key, default_value in defaults[section].items():
         self.cfg[section][key] = self.cfg[section].get( key, default_value )
 
-    for s in 'osds clients'.split():
+    for s in 'osd client'.split():
       section = self.cfg[s]
       if type( section ) != dict:
         raise Exception( f"Error: PBench cfg.{s} must be a hash/dict." )
-      for key in 'configurations'.split():
+      for key in 'permutations'.split():
         section[key] = section.get( key, defaults[s][key] )
-      if type( section['configurations'] ) != dict:
-        raise Exception( f"Error: PBench cfg.{s}.configurations must be a hash/dict of named configurations." )
+      if type( section['permutations'] ) != dict:
+        raise Exception( f"Error: PBench cfg.{s}.permutations must be a hash/dict." )
  
     pool = self.cfg['pool']
     if type( pool ) != dict:
@@ -360,7 +365,7 @@ class PBench( Benchmark ):
   def images_per_client( self ):
     """
     Returns the number of images to use per client.
-    The return value changes as different cfg.images.per-client-counts are traversed in self.image_permutations().
+    The return value changes as different image permutations are iterated over in self.image_permutations().
     """
     return self.permutation['image']['state']['images-per-client']
 
@@ -401,7 +406,7 @@ class PBench( Benchmark ):
 
   def execute_on_head( self, commands, continue_if_error=False ):
     """
-    Executes shell commands on the head node, which is usually configured to be one of the cluster mon/mgr nodes.
+    Executes shell commands on the head node, which is usually one of the cluster mon/mgr nodes.
     """
     if type( commands ) == list:
       commands = "\n".join( commands )
@@ -426,7 +431,7 @@ class PBench( Benchmark ):
   def execute_on_clients( self, commands, continue_if_error=False ):
     """
     Executes shell commands on all currently active client nodes.
-    The active client node set changes as different cfg.client.permutations are traversed in self.client_permutations().
+    The active client node set changes as different client permutations are iterated over in self.client_permutations().
     """
     if type( commands ) == list:
       commands = "\n".join( commands )
@@ -456,7 +461,7 @@ class PBench( Benchmark ):
   @contextmanager
   def osd_permutations( self ):
     """
-    Iterates over configured OSD permutations.
+    Iterates over OSD permutations.
     """
     for pname, p in self.cfg['osd']['permutations'].items():
 
@@ -471,7 +476,7 @@ class PBench( Benchmark ):
   @contextmanager
   def client_permutations( self ):
     """
-    Iterates over configured client permutations.
+    Iterates over client permutations.
     """
     for pname, p in self.cfg['client']['permutations'].items():
 
@@ -507,7 +512,7 @@ class PBench( Benchmark ):
   @contextmanager
   def pool_permutations( self ):
     """
-    Iterates over configured pool permutations.
+    Iterates over pool permutations.
     """
     pool = self.cfg['pool']['name']
 
@@ -532,9 +537,9 @@ class PBench( Benchmark ):
   @contextmanager
   def image_permutations( self ):
     """
-    Iterates over configured RBD image permutations.
+    Iterates over RBD image permutations.
     This method is only used by PBench drivers that use RBD images.
-    Note that RBD image creation/removal commands are executed on clients, not the head host.
+    Note RBD image creation/removal commands are executed on clients, not the head host.
     """
     for pname, p in self.cfg['image']['permutations'].items():
 
@@ -542,7 +547,7 @@ class PBench( Benchmark ):
 
       with self.monitoring( 'create-images' ):
         self.execute_on_clients([
-          f"# sudo {self.rbd()} create {self.pool_image(i)} {p['create-options']}"
+          f"# sudo {self.rbd()} create {self.pool_image(i)} {p['rbd-options']}"
           for i in self.images_per_client()
         ])
 
@@ -561,7 +566,7 @@ class PBench( Benchmark ):
   @contextmanager
   def map_permutations( self ):
     """
-    Iterates over configured RBD image mapping permutations.
+    Iterates over RBD image mapping permutations.
     This method is only used by PBench drivers that map RBD images.
     """
     for pname, p in self.cfg['map']['permutations'].items():
@@ -570,7 +575,7 @@ class PBench( Benchmark ):
 
       with self.monitoring( 'map-images' ):
         self.execute_on_clients([
-          f"# sudo {self.rbd()} device map {self.pool_image(i)} --options '{p['map-options']}'"
+          f"# sudo {self.rbd()} device map {self.pool_image(i)} --options '{p['rbd-options']}'"
           for i in self.images_per_client()
         ])
 
@@ -589,8 +594,8 @@ class PBench( Benchmark ):
   @contextmanager
   def filesystem_permutations( self ):
     """
-    Iterates over configured RBD image filesystem permutations.
-    If a permutation has a null (None) mkfs-options string, no filesystem is created.
+    Iterates over RBD image filesystem permutations.
+    If a permutation has a null mkfs-options string, no filesystem is created.
     This method is only used by PBench drivers that map and mount RBD images.
     """
     for pname, p in self.cfg['fs']['permutations'].items():
@@ -613,7 +618,7 @@ class PBench( Benchmark ):
   @contextmanager
   def mount_permutations( self ):
     """
-    Iterates over configured RBD image filesystem mount permutations.
+    Iterates over RBD image filesystem mount permutations.
     RBD images are only mounted if they have a filesystem (ie, the filesystem permutation had non-null mkfs-options).
     This method is only used by PBench drivers that map and mount RBD images.
     """
@@ -651,7 +656,7 @@ class PBench( Benchmark ):
 
   def radosbench_test_options( self ):
     """
-    Returns the radosbench command line options for the current radosbench test.
+    Returns radosbench command line options for the current radosbench test.
     This method is only used by PBench drivers that use radosbench.
     """
     def dash( o ):
@@ -669,6 +674,9 @@ class PBench( Benchmark ):
 
     duration  = options.pop( 'duration' )
     operation = options.pop( 'operation' )
+
+    if 'processes' in options:
+      processes = options.pop( 'processes' )
 
     forced_options = {
       'id'         : self.cfg['clients']['ceph-auth-id'],
@@ -699,7 +707,7 @@ class PBench( Benchmark ):
 
   def run_radosbench_tests( self ):
     """
-    Runs configured radosbench tests.
+    Runs radosbench tests.
     This method is only used by PBench drivers that use radosbench.
     """
     for test in self.cfg['radosbench']['tests']:
@@ -709,11 +717,11 @@ class PBench( Benchmark ):
       test_dir   = f'{self.run_dir}/{self.permutation.path()}'
       radosbench = f'{self.cmd_path_full}'
       options    = self.radosbench_test_options() # --run-name must be the last option so a process index can be appended
-      commands   = []
 
-      processes = 
-      .get( 'processes', self.cfg['radosbench']['defaults'].get( 'processes', 1 )):
-      for p in v.get( 'processes', self.cfg['radosbench']['defaults'].get( 'processes', 1 )):
+      processes = 1 # todo: extract process count from radosbench defaults and test-specific cfg
+      commands  = []
+
+      for p in processes:
         commands.extend([
           f"sudo mkdir -p -m 0755 {test_dir}",
           f"cd {test_dir}",
@@ -723,11 +731,7 @@ class PBench( Benchmark ):
       self.dropcaches()
 
       with self.monitoring():
-        self.execute_on_clients( f'''
-          sudo mkdir -p -m 0755 {test_dir}
-          cd {test_dir}
-          # sudo {radosbench} {options}-{p} 2> stderr > stdout
-        '''))
+        self.execute_on_clients( commands )
 
       self.permutation.pop()
 
@@ -735,7 +739,7 @@ class PBench( Benchmark ):
 
   def fio_test_options( self ):
     """
-    Returns a string containing the fio command line options for the current fio test.
+    Returns fio command line options for the current fio test.
     This method is only used by PBench drivers that use fio.
     """
     test = self.permutation['test']['name'] # the current fio test
@@ -803,7 +807,7 @@ class PBench( Benchmark ):
 
   def run_fio_tests( self ):
     """
-    Runs the configured fio tests.
+    Runs fio tests.
     This method is only used by PBench drivers that use fio.
     """
     for test in self.cfg['fio']['tests']:
@@ -827,7 +831,7 @@ class PBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
 
-  def pre_run_setup( self ):
+  def run_setup( self ):
     """
     TODO
     """
@@ -845,8 +849,9 @@ class PBench( Benchmark ):
 
   #----------------------------------------------------------------------------#
   
-  def post_run_cleanup( self ):
+  def run_cleanup( self ):
     """
+    TODO
     """
     client = f"client.{self.cfg['clients']['ceph-auth-id']}"
 
@@ -877,8 +882,8 @@ class PBench( Benchmark ):
     This method is called by main() in cbt.py.
     """
     super().run()
-    self.pre_run_setup()
+    self.run_setup()
     self.permutation.reset()
     self.iterate_permutations()
     self.gather_results()
-    self.post_run_cleanup()
+    self.run_cleanup()

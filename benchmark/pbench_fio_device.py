@@ -12,7 +12,7 @@ class PBenchFioDevice( PBench ):
     """
     Extends the base PBench initializer.
     """
-    self.driver = 'fio_device'
+    self.driver = 'fio-device'
     super().__init__( archive_dir, cluster, config )
 
   #----------------------------------------------------------------------------#
