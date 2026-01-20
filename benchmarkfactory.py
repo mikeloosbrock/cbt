@@ -13,11 +13,11 @@ from benchmark.nullbench import Nullbench
 from benchmark.cosbench import Cosbench
 from benchmark.cephtestrados import CephTestRados
 from benchmark.getput import Getput
-from benchmark.mbench_radosbench   import MBenchRadosbench
-from benchmark.mbench_fio_librados import MBenchFioLibrados
-from benchmark.mbench_fio_librbd   import MBenchFioLibrbd
-from benchmark.mbench_fio_krbd     import MBenchFioKrbd
-from benchmark.mbench_fio_device   import MBenchFioDevice
+from benchmark.pbench_device    import PBenchDevice
+from benchmark.pbench_rados     import PBenchRados
+from benchmark.pbench_rbd       import PBenchRbd
+from benchmark.pbench_krbd_raw  import PBenchKrbdRaw
+from benchmark.pbench_krbd_file import PBenchKrbdFile
 
 def get_all(archive, cluster, iteration):
     for benchmark, config in sorted(settings.benchmarks.items()):
@@ -67,11 +67,11 @@ def get_object(archive, cluster, benchmark, bconfig):
         'cosbench': Cosbench,
         'cephtestrados': CephTestRados,
         'getput': Getput,
-        'mbench_radosbench':   MBenchRadosbench,
-        'mbench_fio_librados': MBenchFioLibrados,
-        'mbench_fio_librbd':   MBenchFioLibrbd,
-        'mbench_fio_krbd':     MBenchFioKrbd,
-        'mbench_fio_device':   MBenchFioDevice,
+        'pbench_device':    PBenchDevice,
+        'pbench_rados':     PBenchRados,
+        'pbench_rbd':       PBenchRbd,
+        'pbench_krbd_raw':  PBenchKrbdRaw,
+        'pbench_krbd_file': PBenchKrbdFile,
         }
     try:
         return benchmarks[benchmark](archive, cluster, bconfig)
